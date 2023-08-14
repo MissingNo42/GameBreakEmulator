@@ -5,6 +5,7 @@
 #include "io_ram.h"
 #include "units/cpu.h"
 #include "units/dma.h"
+#include "units/ppu.h"
 
 IO_RAM ioRam;
 
@@ -207,7 +208,8 @@ void w40(u16 addr, u8 value) { // LCDC
 }
 
 void w41(u16 addr, u8 value) {
-	ioSTAT = value & 0x70;
+	ioSTAT = value & 0x78;
+	STAT_changed();
 }
 
 void w42(u16 addr, u8 value) {
@@ -224,6 +226,7 @@ void w45(u16 addr, u8 value) { // LYC
 	ioLYC = value;
 	if (ioLYC == ioLY) ioSTAT |= 0x4; // Upd STAT.2
 	else ioSTAT &= ~0x4;
+	STAT_changed();
 }
 
 void w46(u16 addr, u8 value) { // OAM DMA

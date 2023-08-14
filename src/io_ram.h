@@ -234,7 +234,7 @@ extern writer ** io_write_handlers;
 #define read_io(addr) indirect_reader(io, addr, memoryMap.dma_lock)
 
 // direct: check io mem access
-// raw: write value only (emu side)
+// raw: write value only (emu side), then, the readable one
 
 static inline void direct_raw_write_io(u16 addr, u8 value) {
 	memoryMap.io[addr] = value; // ((u8*)ioRam)[addr & 0xff]
