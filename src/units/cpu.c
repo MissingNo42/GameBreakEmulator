@@ -3,6 +3,7 @@
 //
 
 #include "cpu.h"
+#include "ppu.h"
 #include "mmu.h"
 #include "../io_ram.h"
 #include "../cartridge.h"
@@ -15,10 +16,11 @@ typedef u8 Instruction();
 
 #define cpu_write(addr, value) write(addr, value); sync(4)
 
-void static inline sync(u8 cycle) { //TODO u8?
-	if (double_speed) cycle >>= 1;
+void static inline sync(u8 cycles) { //TODO u8?
+	dma_sync(cycles);
+	if (double_speed) cycles >>= 1;
 	//TODO run every units here
-	dma_sync(cycle);
+	ppu_step(cycles);
 }
 
 u8 static inline cpu_read(u16 addr) {
@@ -2952,7 +2954,7 @@ void cpu_init() {
 }
 
 void cpu_run() { // run 1 loop (>= 1 M-cycle)
-	u8 fflag = read_io(IF);
+	u8 fflag = ioIF;
 	
 	u8 flag = fflag & read_ie();
 	// TODO: add halt_bug in RST
