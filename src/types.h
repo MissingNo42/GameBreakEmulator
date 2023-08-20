@@ -6,12 +6,17 @@
 #define GOBOUEMU_TYPES_H
 
 
+////////////////////////   Macros   ///////////////////////////
+
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 #define LITTLE_ENDIAN 1
-// TODO: check SP/PC/HL..
+// TODO: check SP/PC/HL/Structs..
 #else
 #define BIG_ENDIAN 1
 #endif
+
+
+////////////////////////    Types   ///////////////////////////
 
 typedef unsigned char  u8;
 typedef unsigned short u16;
