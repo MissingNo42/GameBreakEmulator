@@ -5,23 +5,14 @@
 #ifndef GOBOUEMU_MMU_H
 #define GOBOUEMU_MMU_H
 
+////////////////////////  Includes  ///////////////////////////
+
+#include <stddef.h>
 #include "../types.h"
 #include "../cartridge.h"
 
-#define ROM0  0x0000
-#define ROM1  0x4000
-#define VRAM  0x8000
-#define XRAM  0xA000
-#define WRAM0 0xC000
-#define WRAM1 0xD000
-#define ERAM  0xE000
-#define OAM   0xFE00
-#define RSV   0xFEA0
-#define IO    0xFF00
-#define HRAM  0xFF80
-#define IE    0xFFFF
 
-#define regIE memoryMap.ie
+////////////////////////    Types   ///////////////////////////
 
 /**
  * @brief padded offsets in Memory
@@ -38,44 +29,69 @@ Struct {
 	   * io,    // ff00 - ff7f
 	   * hram,  // ff80 - fffe
 	   ie;      // ffff - ffff (not a ptr bc not needed)
-    u8 cram[0x80]; // GBC
     u8 vram_bank: 1, wram_bank: 3; // GBC
+	u8 xram_bank: 4; // TODO verify :4
+	u8 rom0_bank, rom1_bank;
+	u32 map_size;
+    u8 cram[0x80]; // GBC
 	u8 oam_lock: 1, vram_lock: 1;
 	u8 ppu_oam_lock: 1; // oam
 	u8 ppu_ram_lock: 1; // vram / cram
 	u8 dma_lock: 1; // lock vram, oam, io
 	u8 mem_lock: 1; // lock rom, xram, wram (DMG only)
 	u8 xram_enable: 1; // 1 = enable
+	u8 bootrom_unmapped: 1; // 1 = unmapped
 } MemoryMap;
+
+
+//////////////////////  Declarations  /////////////////////////
 
 extern u8 * Memory;
 extern MemoryMap memoryMap;
+
+
+////////////////////////   Macros   ///////////////////////////
+
+#define ROM0  0x0000
+#define ROM1  0x4000
+#define VRAM  0x8000
+#define XRAM  0xA000
+#define WRAM0 0xC000
+#define WRAM1 0xD000
+#define ERAM  0xE000
+#define OAM   0xFE00
+#define RSV   0xFEA0
+#define IO    0xFF00
+#define HRAM  0xFF80
+#define IE    0xFFFF
+
+#define regIE memoryMap.ie
 
 // Mem Lock
 #define Lock_ppu_oam() memoryMap.oam_lock = memoryMap.ppu_oam_lock = 1 // Lock OAM
 #define Unlock_ppu_oam() memoryMap.ppu_oam_lock = 0; if (!memoryMap.dma_lock) memoryMap.oam_lock = 0
 
-#define Lock_ppu_ram() memoryMap.ram_lock = memoryMap.ppu_ram_lock = 1 // Lock VRAM + CRAM + OAM
-#define Unlock_ppu_ram() memoryMap.ppu_ram_lock = 0; if (!memoryMap.dma_lock) memoryMap.ram_lock = 0
+#define Lock_ppu_ram() memoryMap.vram_lock = memoryMap.ppu_ram_lock = 1 // Lock VRAM + CRAM + OAM
+#define Unlock_ppu_ram() memoryMap.ppu_ram_lock = 0; if (!memoryMap.dma_lock) memoryMap.vram_lock = 0
 
-#define dma_locking(n) memoryMap.dma_lock = n; if (!cartridgeInfo.GBC_MODE) memoryMap.mem_lock = n
+#define dma_locking(n) memoryMap.dma_lock = n; if (!GBC) memoryMap.mem_lock = n
 #define Lock_dma() memoryMap.oam_lock = memoryMap.vram_lock = dma_locking(1)
 #define Unlock_dma() memoryMap.mem_lock = dma_locking(0); if(!memoryMap.ppu_oam_lock)  memoryMap.oam_lock = 0; if(!memoryMap.ppu_ram_lock) memoryMap.vram_lock = 0
 
 // Mem Bank
-#define set_rom0(bank) memoryMap.rom0 = (Memory + ((bank) << 14) - ROM0)
-#define set_rom1(bank) memoryMap.rom1 = (Memory + ((bank) << 14) - ROM1)
+#define set_rom0(bank) memoryMap.rom0_bank = (bank), memoryMap.rom0 = (Memory + ((bank) << 14) - ROM0)
+#define set_rom1(bank) memoryMap.rom1_bank = (bank), memoryMap.rom1 = (Memory + ((bank) << 14) - ROM1)
 
 #define set_vram(bank) memoryMap.vram_bank = (bank), memoryMap.vram = (memoryMap.vram_sector + ((bank) << 13) - VRAM)
 #define set_wram(bank) memoryMap.wram_bank = (bank), memoryMap.wram1 = (memoryMap.wram_sector + ((bank) << 12) - WRAM1)
-#define set_xram(bank) memoryMap.xram = (memoryMap.xram_sector + ((bank) << 13) - XRAM)
+#define set_xram(bank) memoryMap.xram_bank = (bank), memoryMap.xram = (memoryMap.xram_sector + ((bank) << 13) - XRAM)
 
 // Mem Access
 #define direct_reader(R, addr) memoryMap.R[addr]
-#define indirect_reader(R, addr, cond) (cond) ? 0xFF : direct_reader(R, addr)
+#define indirect_reader(R, addr, cond) (cond) ? 0xFF : direct_read_##R(addr)
 
 #define direct_writer(R, addr, value) memoryMap.R[addr] = value
-#define indirect_writer(R, addr, value, cond) if (!(cond)) direct_writer(R, addr, value)
+#define indirect_writer(R, addr, value, cond) if (!(cond)) direct_write_##R(addr, value)
 
 
 #define  direct_read_ie() memoryMap.ie
@@ -86,20 +102,26 @@ extern MemoryMap memoryMap;
 
 #define  direct_read_rom_0(addr) direct_reader(rom0, addr)
 #define direct_write_rom_0(addr, value) mapper.io.write_rom0(addr, value)
-#define  read_rom_0(addr) indirect_reader(rom0, addr, memoryMap.mem_lock)
-#define write_rom_0(addr, value) indirect_writer(rom0, addr, value, memoryMap.mem_lock)
+#define  read_rom_0(addr) indirect_reader(rom_0, addr, memoryMap.mem_lock)
+#define write_rom_0(addr, value) indirect_writer(rom_0, addr, value, memoryMap.mem_lock)
 
 
 #define  direct_read_rom_1(addr) direct_reader(rom1, addr)
 #define direct_write_rom_1(addr, value) mapper.io.write_rom1(addr, value)
-#define  read_rom_1(addr) indirect_reader(rom1, addr, memoryMap.mem_lock)
-#define write_rom_1(addr, value) indirect_writer(rom1, addr, value, memoryMap.mem_lock)
+#define  read_rom_1(addr) indirect_reader(rom_1, addr, memoryMap.mem_lock)
+#define write_rom_1(addr, value) indirect_writer(rom_1, addr, value, memoryMap.mem_lock)
 
 
 #define  direct_read_vram(addr) direct_reader(vram, addr)
 #define direct_write_vram(addr, value) direct_writer(vram, addr, value)
 #define  read_vram(addr) indirect_reader(vram, addr, memoryMap.vram_lock)
 #define write_vram(addr, value) indirect_writer(vram, addr, value, memoryMap.vram_lock)
+
+
+#define  direct_read_cram(addr) direct_reader(cram, addr)
+#define direct_write_cram(addr, value) direct_writer(cram, addr, value)
+#define  read_cram(addr) indirect_reader(cram, addr, memoryMap.ppu_ram_lock)
+#define write_cram(addr, value) indirect_writer(cram, addr, value, memoryMap.ppu_ram_lock)
 
 
 #define  direct_read_xram(addr) mapper.io.read_ram(addr)
@@ -125,6 +147,9 @@ extern MemoryMap memoryMap;
 #define  read_oam(addr) indirect_reader(oam, addr, memoryMap.oam_lock)
 #define write_oam(addr, value) indirect_writer(oam, addr, value, memoryMap.oam_lock)
 
+#define direct_read_oam_block(index) ((ObjAttribute *)(memoryMap.oam + OAM))[index]
+#define read_oam_block(index) (memoryMap.dma_lock) ? (ObjAttribute){0xFF, 0xFF, 0xFF, 0xFF} : direct_read_oam_block(index)
+#define read_oam_mode3(offset) (memoryMap.dma_lock) ? direct_reader(oam, OAM | dma_progess) : direct_reader(oam, OAM | (offset))
 
 #define  direct_read_hram(addr) direct_reader(hram, addr)
 #define direct_write_hram(addr, value) direct_writer(hram, addr, value)
@@ -139,7 +164,16 @@ extern MemoryMap memoryMap;
 #define INT_SERIAL 8
 #define INT_JOYPAD 16
 
+
+////////////////////////   Methods   //////////////////////////
+
+void map_bootrom();
+
+u32 get_size();
 u8 * init_memory();
+u8 * alloc_memory();
+void map_memory();
+void free_memory();
 
 u8 read(u16 addr);
 void write(u16 addr, u8 value);
@@ -148,5 +182,37 @@ u8 direct_read(u16 addr);
 void direct_write(u16 addr, u8 value);
 
 static inline void dummy_write(u16 addr, u8 value){}
+
+
+/////////////////////  Registrations  /////////////////////////
+
+Reset(mmu) {
+	// Reset the mapping
+	for (u16 i = 0; i < (u16)sizeof(memoryMap); i++) ((u8*)&memoryMap)[i] = 0x00;
+	memoryMap.rom1_bank = memoryMap.wram_bank = 1;
+	
+	if (hard) {
+		free_memory();
+	} else {
+		get_size(); // avoid freeing the existing map
+	}
+	
+	init_memory();
+	
+	if (hard) map_bootrom();
+}
+
+SaveSize(mmu, sizeof (memoryMap) + memoryMap.map_size)
+
+Save(mmu) {
+	save_obj(memoryMap);
+	save_obj(*(u8 (*)[memoryMap.map_size])Memory);
+}
+
+Load(mmu) {
+	load_obj(memoryMap);
+	load_obj(*(u8 (*)[memoryMap.map_size])Memory); // need correct map_size
+	map_memory();
+}
 
 #endif //GOBOUEMU_MMU_H
