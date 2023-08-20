@@ -5,7 +5,13 @@
 #ifndef GOBOUEMU_CPU_H
 #define GOBOUEMU_CPU_H
 
+////////////////////////  Includes  ///////////////////////////
+
 #include "../types.h"
+#include "../utils.h"
+
+
+////////////////////////    Types   ///////////////////////////
 
 #ifdef LITTLE_ENDIAN
 Struct {
@@ -31,11 +37,12 @@ Struct {
 		struct { u8 rL, rH; };
 		u16 rHL;
 	};
-	u16 rSP, rPC, rOPCODE;
+	u16 rSP, rPC;
 	union {
 		u16 rOPERAND;
 		struct { u8 rO1, rO2; };
 	};
+	u8 rOPCODE;
 	u8 rIME: 1, rIME_DELAY: 2, rhalted: 1, rhalt_bug: 1, rbtn_selector: 2, rdouble_speed: 1;
 	u8 rActionBtn: 4, rDirectionBtn: 4; // used to keep all btn, then dispatched to JOYP
 } CPURegisters;
@@ -63,18 +70,25 @@ Struct {
 		struct { u8 rH, rL; };
 		u16 rHL;
 	};
-	u16 rSP, rPC, rOPCODE;
+	u16 rSP, rPC;
 	union {
 		u16 rOPERAND;
 		struct { u8 rO2, rO1; };
 	};
+	u8 rOPCODE;
 	u8 rIME: 1, rIME_DELAY: 2, rhalted: 1, rhalt_bug: 1;
 	u8 rActionBtn: 4, rDirectionBtn: 4; // used to keep all btn, then dispatched to JOYP
 } CPURegisters;
 #endif
 
-extern char * OPName[];
+
+//////////////////////  Declarations  /////////////////////////
+
+extern const char * const OPName[];
 extern CPURegisters Registers;
+extern u16 PCX; // debug opc's PC
+
+////////////////////////   Macros   ///////////////////////////
 
 #define A Registers.rA // r__ prefix avoid C-macro making trash
 #define F Registers.rF
@@ -107,6 +121,27 @@ extern CPURegisters Registers;
 #define DirectionBtn Registers.rDirectionBtn
 #define btn_selector Registers.rbtn_selector
 #define double_speed Registers.rdouble_speed
+
+
+/////////////////////  Registrations  /////////////////////////
+
+Reset(cpu){
+	for (u16 i = 0; i < (u16)sizeof(Registers); i++) ((u8*)&Registers)[i] = 0x00;
+}
+
+SaveSize(cpu, sizeof (Registers))
+
+Save(cpu) {
+	save_obj(Registers);
+}
+
+Load(cpu) {
+	load_obj(Registers);
+	// TODO release BTN
+}
+
+
+////////////////////////   Methods   //////////////////////////
 
 void cpu_init();
 void cpu_run();

@@ -2,51 +2,82 @@
 // Created by Romain on 21/07/2023.
 //
 
+////////////////////////  Includes  ///////////////////////////
+
 #include "cpu.h"
 #include "ppu.h"
 #include "mmu.h"
-#include "../io_ram.h"
-#include "../cartridge.h"
 #include "dma.h"
 
 
+//////////////////////  Declarations  /////////////////////////
+
 CPURegisters Registers;
+u16 PCX = 0;
+
+
+////////////////////////    Types   ///////////////////////////
 
 typedef u8 Instruction();
 
+
+////////////////////////   Macros   ///////////////////////////
+
 #define cpu_write(addr, value) write(addr, value); sync(4)
 
-void static inline sync(u8 cycles) { //TODO u8?
-	dma_sync(cycles);
-	if (double_speed) cycles >>= 1;
-	//TODO run every units here
-	ppu_step(cycles);
+
+////////////////////////   Methods   //////////////////////////
+
+static inline void hdma_sync() {
+	do {
+		u8 cycles = 4; // 4 because most requires at least 2 (4 >> 1 == 2)
+		dma_sync(cycles);
+		if (double_speed) cycles >>= 1;
+		hdma_run(cycles);
+		
+		ppu_step(cycles);
+		//TODO run every units here
+		
+	} while (hdma.general);
 }
 
-u8 static inline cpu_read(u16 addr) {
+static inline void sync(u8 cycles) {
+	if (hdma.general) hdma_sync();
+	else {
+		dma_sync(cycles);
+		if (double_speed) cycles >>= 1;
+		
+		//TODO run every units here
+		ppu_step(cycles);
+	}
+}
+
+static inline u8 cpu_read(u16 addr) {
 	u8 r = read(addr);
 	sync(4);
 	return r;
 }
 
-u8 static inline fetch_opcode(){
+static inline u8 fetch_opcode(){
+	PCX = PC;
 	OPCODE = read(PC);
 	if (halt_bug) halt_bug = 0; // dont increment PC once
 	else PC++;
 	return OPCODE;
 }
 
-u8 static inline fetch_1operand(){
+static inline u8 fetch_1operand(){
+	O2 = 0x00; // debug only
 	return (O1 = read(PC++));
 }
 
-u16 static inline fetch_2operand(){
+static inline u16 fetch_2operand(){
 	O1 = read(PC++);
 	O2 = read(PC++);
 	return OPERAND;
 }
 
-u8 static inline UnknownOpcode(){
+static inline u8 UnknownOpcode(){
 	ERROR("Unknown Opcode", "OPC = %02X\n", OPCODE);
 	return 4;
 }
@@ -56,51 +87,64 @@ static Instruction * HighInstructions[0x100];
 #define INST(code, name) static inline u8 i##code()
 #define INST_H(code, name) static inline u8 iCB##code()
 
-#define ADD(r) u16 R = A + r, Cx = A ^ r ^ R; A = R; c = Cx >> 8; z = !A; h = Cx >> 4; n = 0
-#define ADC(r) u16 R = A + r + c, Cx = A ^ r ^ R; A = R; c = Cx >> 8; z = !A; h = Cx >> 4; n = 0
+#define ADD(r) u16 R = A + (r), Cx = A ^ (r) ^ R; A = R; c = Cx >> 8; z = !A; h = Cx >> 4; n = 0
+#define ADC(r) u16 R = A + (r) + c, Cx = A ^ (r) ^ R; A = R; c = Cx >> 8; z = !A; h = Cx >> 4; n = 0
 
-#define SUB(r) s16 R = A - r, Cx = A ^ r ^ R; A = R; c = Cx >> 8; z = !A; h = Cx >> 4; n = 1; sync(4)
-#define SBC(r) s16 R = A - r - c, Cx = A ^ r ^ R; A = R; c = Cx >> 8; z = !A; h = Cx >> 4; n = 1; sync(4)
+#define SUB(r) s16 R = A - (r), Cx = A ^ (r) ^ R; A = R; c = Cx >> 8; z = !A; h = Cx >> 4; n = 1; sync(4)
+#define SBC(r) s16 R = A - (r) - c, Cx = A ^ (r) ^ R; A = R; c = Cx >> 8; z = !A; h = Cx >> 4; n = 1; sync(4)
 
-#define ADD_SP(r) u32 R = SP + (s8)r, Cx = SP ^ r ^ R; SP = R; c = Cx >> 8; h = Cx >> 4; z = n = 0; sync(8)
-#define ADD_SP_d(r, dst) u32 R = SP + (s8)r, Cx = SP ^ r ^ R; dst = R; c = Cx >> 8; h = Cx >> 4; z = n = 0; sync(4)
-#define ADD_HL(r) u32 R = HL + r, Cx = HL ^ r ^ R; HL = R; c = Cx >> 16; h = Cx >> 12; n = 0; sync(4)
+#define ADD_SP(r) u32 R = SP + (s8)(r), Cx = SP ^ (r) ^ R; SP = R; c = Cx >> 8; h = Cx >> 4; z = n = 0; sync(8)
+#define ADD_SP_d(r, dst) u32 R = SP + (s8)(r), Cx = SP ^ (r) ^ R; (dst) = R; c = Cx >> 8; h = Cx >> 4; z = n = 0; sync(4)
+#define ADD_HL(r) u32 R = HL + (r), Cx = HL ^ (r) ^ R; HL = R; c = Cx >> 16; h = Cx >> 12; n = 0; sync(4)
 
-#define INC(r) (h = r & 0x0F) == 0x0F; r++; z = !r; n = 0
-#define DEC(r) h = !(r & 0x0F); r--; z = !r; n = 1
+#define INC(r) h = ((r) & 0x0F) == 0x0F; (r)++; z = !(r); n = 0
+#define DEC(r) h = !((r) & 0x0F); (r)--; z = !(r); n = 1
 
-#define AND(r) A &= r; c = n = 0, h = 1, z = !A
-#define XOR(r) A ^= r; c = n = h = 0, z = !A
-#define OR(r) A |= r; c = n = h = 0, z = !A
-#define CP(r) z = A == r, n = 1, h = (A & 0x0F) < (r & 0x0F), c = A < r
+#define AND(r) A &= (r); c = n = 0, h = 1, z = !A
+#define XOR(r) A ^= (r); c = n = h = 0, z = !A
+#define OR(r) A |= (r); c = n = h = 0, z = !A
+#define CP(r) z = A == (r), n = 1, h = (A & 0x0F) < ((r) & 0x0F), c = A < r
 
-#define RL(r) u8 A7 = r >> 7; r = r << 1 | c, c = A7, z = !r, n = h = 0
+#define RL(r) u8 A7 = (r) >> 7; (r) = (r) << 1 | c, c = A7, z = !(r), n = h = 0
 #define RLA() u8 A7 = A >> 7; A = A << 1 | c, c = A7, z = n = h = 0
-#define RLC(r) c = r >> 7; r = r << 1 | c, z = !r, n = h = 0
+#define RLC(r) c = (r) >> 7; (r) = (r) << 1 | c, z = !(r), n = h = 0
 #define RLCA() c = A >> 7; A = A << 1 | c, z = n = h = 0
 
-#define RR(r) u8 A0 = r & 1; r = r >> 1 | c << 7, c = A0, z = !r, n = h = 0
+#define RR(r) u8 A0 = (r) & 1; (r) = (r) >> 1 | c << 7, c = A0, z = !(r), n = h = 0
 #define RRA() u8 A0 = A & 1; A = A >> 1 | c << 7, c = A0, z = n = h = 0
-#define RRC(r) c = r & 1; r = r >> 1 | c << 7, z = !r, n = h = 0
+#define RRC(r) c = (r) & 1; (r) = (r) >> 1 | c << 7, z = !(r), n = h = 0
 #define RRCA() c = A & 1; A = A >> 1 | c << 7, z = n = h = 0
 
-#define SLA(r) c = r >> 7; r <<= 1; z = !r, n = h = 0
-#define SRA(r) c = r & 1; r = (r >> 1) | (r & 0x80); z = !r, n = h = 0
-#define SRL(r) c = r & 1; r >>= 1; z = !r, n = h = 0
+#define SLA(r) c = (r) >> 7; (r) <<= 1; z = !(r), n = h = 0
+#define SRA(r) c = (r) & 1; (r) = ((r) >> 1) | ((r) & 0x80); z = !(r), n = h = 0
+#define SRL(r) c = (r) & 1; (r) >>= 1; z = !(r), n = h = 0
 
-#define SWAP(r) r = (r >> 4) | (r << 4); z = !r, h = c = n = 0
-#define BIT(k, r) z = !((r >> k) & 1), n = 0, h = 1
-#define RES(k, r) r &= ~(1 << k)
-#define SET(k, r) r |= 1 << k
+#define SWAP(r) (r) = ((r) >> 4) | ((r) << 4); z = !(r), h = c = n = 0
+#define BIT(k, r) z = !(((r) >> (k)) & 1), n = 0, h = 1
+#define RES(k, r) (r) &= ~(1 << (k))
+#define SET(k, r) (r) |= 1 << k
 
 #define SCF() c = 1, n = h = 0
 #define CCF() c = ~c, n = h = 0
 #define CPL() A = ~A, n = h = 1
 
-#define PUSH8(r) cpu_write(--SP, r)
-#define PUSH16(r) PUSH8(r >> 8); PUSH8(r)
+#define PUSH8(r) cpu_write(--SP, (u8)(r))
+//#define PUSH16(r) PUSH8((r) >> 8); PUSH8(r)
 #define POP8() cpu_read(SP++)
-#define POP16() POP8() | (POP8() << 8)
+//#define POP16() POP8() | (POP8() << 8)
+
+
+static inline void PUSH16(u16 r){
+	PUSH8(r >> 8);
+	PUSH8(r);
+}
+
+
+static inline u16 POP16(){
+	s32 r = POP8();
+	return (u16)(r | (POP8() << 8));
+}
+
 
 ///////////////// INSTRUCTION /////////////////
 
@@ -467,7 +511,7 @@ INST(76, HALT) {
 	if (halted) goto dec;
 
 	if (!IME && ioIF & read_ie()) {
-		if (cartridgeInfo.GBC_MODE) {}
+		if (GBC) {}
 		else halt_bug = 1;
 	} else {
 		halted = 1;
@@ -1383,7 +1427,7 @@ INST(10, STOP_0) {
 			halted = 1;
 		}
 	} else {
-		if ((ioKEY1 & 1) && cartridgeInfo.GBC_MODE) {
+		if ((ioKEY1 & 1) && GBC) {
 			if (ioIF & read_ie()) {
 				if (IME) {
 					ERROR("STOP Instruction error", "non-deterministic crash\n");
@@ -2902,7 +2946,7 @@ static Instruction * HighInstructions[] = {
 	iCBF0, iCBF1, iCBF2, iCBF3, iCBF4, iCBF5, iCBF6, iCBF7, iCBF8, iCBF9, iCBFA, iCBFB, iCBFC, iCBFD, iCBFE, iCBFF, // F0
 };
 
-static u8 OPSize[] = {
+static u8 const OPSize[] = {
 	0, 2, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 1, 0, // 00
 	0, 2, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, // 10
 	1, 2, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, // 20
@@ -2921,23 +2965,23 @@ static u8 OPSize[] = {
 	1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 2, 0, 0, 0, 1, 0, // F0
 };
 
-char * OPName[] = {
-	"NOP", "LD BC,d16", "LD (BC),A", "INC BC", "INC B", "DEC B", "LD B,d8", "RLCA", "LD (a16),SP", "ADD HL,BC", "LD A,(BC)", "DEC BC", "INC C", "DEC C", "LD C,d8", "RRCA", // 00
-	"STOP 0", "LD DE,d16", "LD (DE),A", "INC DE", "INC D", "DEC D", "LD D,d8", "RLA", "JR r8", "ADD HL,DE", "LD A,(DE)", "DEC DE", "INC E", "DEC E", "LD E,d8", "RRA", // 10
-	"JR NZ,r8", "LD HL,d16", "LD (HL+),A", "INC HL", "INC H", "DEC H", "LD H,d8", "DAA", "JR Z,r8", "ADD HL,HL", "LD A,(HL+)", "DEC HL", "INC L", "DEC L", "LD L,d8", "CPL", // 20
-	"JR NC,r8", "LD SP,d16", "LD (HL-),A", "INC SP", "INC (HL)", "DEC (HL)", "LD (HL),d8", "SCF", "JR C,r8", "ADD HL,SP", "LD A,(HL-)", "DEC SP", "INC A", "DEC A", "LD A,d8", "CCF", // 30
-	"LD B,B", "LD B,C", "LD B,D", "LD B,E", "LD B,H", "LD B,L", "LD B,(HL)", "LD B,A", "LD C,B", "LD C,C", "LD C,D", "LD C,E", "LD C,H", "LD C,L", "LD C,(HL)", "LD C,A", // 40
-	"LD D,B", "LD D,C", "LD D,D", "LD D,E", "LD D,H", "LD D,L", "LD D,(HL)", "LD D,A", "LD E,B", "LD E,C", "LD E,D", "LD E,E", "LD E,H", "LD E,L", "LD E,(HL)", "LD E,A", // 50
-	"LD H,B", "LD H,C", "LD H,D", "LD H,E", "LD H,H", "LD H,L", "LD H,(HL)", "LD H,A", "LD L,B", "LD L,C", "LD L,D", "LD L,E", "LD L,H", "LD L,L", "LD L,(HL)", "LD L,A", // 60
-	"LD (HL),B", "LD (HL),C", "LD (HL),D", "LD (HL),E", "LD (HL),H", "LD (HL),L", "HALT", "LD (HL),A", "LD A,B", "LD A,C", "LD A,D", "LD A,E", "LD A,H", "LD A,L", "LD A,(HL)", "LD A,A", // 70
-	"ADD A,B", "ADD A,C", "ADD A,D", "ADD A,E", "ADD A,H", "ADD A,L", "ADD A,(HL)", "ADD A,A", "ADC A,B", "ADC A,C", "ADC A,D", "ADC A,E", "ADC A,H", "ADC A,L", "ADC A,(HL)", "ADC A,A", // 80
-	"SUB B", "SUB C", "SUB D", "SUB E", "SUB H", "SUB L", "SUB (HL)", "SUB A", "SBC A,B", "SBC A,C", "SBC A,D", "SBC A,E", "SBC A,H", "SBC A,L", "SBC A,(HL)", "SBC A,A", // 90
-	"AND B", "AND C", "AND D", "AND E", "AND H", "AND L", "AND (HL)", "AND A", "XOR B", "XOR C", "XOR D", "XOR E", "XOR H", "XOR L", "XOR (HL)", "XOR A", // A0
-	"OR B", "OR C", "OR D", "OR E", "OR H", "OR L", "OR (HL)", "OR A", "CP B", "CP C", "CP D", "CP E", "CP H", "CP L", "CP (HL)", "CP A", // B0
-	"RET NZ", "POP BC", "JP NZ,a16", "JP a16", "CALL NZ,a16", "PUSH BC", "ADD A,d8", "RST 00H", "RET Z", "RET", "JP Z,a16", "PREFIX CB", "CALL Z,a16", "CALL a16", "ADC A,d8", "RST 08H", // C0
-	"RET NC", "POP DE", "JP NC,a16", "UNKN", "CALL NC,a16", "PUSH DE", "SUB d8", "RST 10H", "RET C", "RETI", "JP C,a16", "UNKN", "CALL C,a16", "UNKN", "SBC A,d8", "RST 18H", // D0
-	"LDH (a8),A", "POP HL", "LD (C),A", "UNKN", "UNKN", "PUSH HL", "AND d8", "RST 20H", "ADD SP,r8", "JP (HL)", "LD (a16),A", "UNKN", "UNKN", "UNKN", "XOR d8", "RST 28H", // E0
-	"LDH A,(a8)", "POP AF", "LD A,(C)", "DI", "UNKN", "PUSH AF", "OR d8", "RST 30H", "LD HL,SP+r8", "LD SP,HL", "LD A,(a16)", "EI", "UNKN", "UNKN", "CP d8", "RST 38H", // F0
+const char * const OPName[] = {
+	"NOP        ", "LD BC,d16  ", "LD (BC),A  ", "INC BC     ", "INC B      ", "DEC B      ", "LD B,d8    ", "RLCA       ", "LD (a16),SP", "ADD HL,BC  ", "LD A,(BC)  ", "DEC BC     ", "INC C      ", "DEC C      ", "LD C,d8    ", "RRCA       ", // 00
+	"STOP 0     ", "LD DE,d16  ", "LD (DE),A  ", "INC DE     ", "INC D      ", "DEC D      ", "LD D,d8    ", "RLA        ", "JR r8      ", "ADD HL,DE  ", "LD A,(DE)  ", "DEC DE     ", "INC E      ", "DEC E      ", "LD E,d8    ", "RRA        ", // 10
+	"JR NZ,r8   ", "LD HL,d16  ", "LD (HL+),A ", "INC HL     ", "INC H      ", "DEC H      ", "LD H,d8    ", "DAA        ", "JR Z,r8    ", "ADD HL,HL  ", "LD A,(HL+) ", "DEC HL     ", "INC L      ", "DEC L      ", "LD L,d8    ", "CPL        ", // 20
+	"JR NC,r8   ", "LD SP,d16  ", "LD (HL-),A ", "INC SP     ", "INC (HL)   ", "DEC (HL)   ", "LD (HL),d8 ", "SCF        ", "JR C,r8    ", "ADD HL,SP  ", "LD A,(HL-) ", "DEC SP     ", "INC A      ", "DEC A      ", "LD A,d8    ", "CCF        ", // 30
+	"LD B,B     ", "LD B,C     ", "LD B,D     ", "LD B,E     ", "LD B,H     ", "LD B,L     ", "LD B,(HL)  ", "LD B,A     ", "LD C,B     ", "LD C,C     ", "LD C,D     ", "LD C,E     ", "LD C,H     ", "LD C,L     ", "LD C,(HL)  ", "LD C,A     ", // 40
+	"LD D,B     ", "LD D,C     ", "LD D,D     ", "LD D,E     ", "LD D,H     ", "LD D,L     ", "LD D,(HL)  ", "LD D,A     ", "LD E,B     ", "LD E,C     ", "LD E,D     ", "LD E,E     ", "LD E,H     ", "LD E,L     ", "LD E,(HL)  ", "LD E,A     ", // 50
+	"LD H,B     ", "LD H,C     ", "LD H,D     ", "LD H,E     ", "LD H,H     ", "LD H,L     ", "LD H,(HL)  ", "LD H,A     ", "LD L,B     ", "LD L,C     ", "LD L,D     ", "LD L,E     ", "LD L,H     ", "LD L,L     ", "LD L,(HL)  ", "LD L,A     ", // 60
+	"LD (HL),B  ", "LD (HL),C  ", "LD (HL),D  ", "LD (HL),E  ", "LD (HL),H  ", "LD (HL),L  ", "HALT       ", "LD (HL),A  ", "LD A,B     ", "LD A,C     ", "LD A,D     ", "LD A,E     ", "LD A,H     ", "LD A,L     ", "LD A,(HL)  ", "LD A,A     ", // 70
+	"ADD A,B    ", "ADD A,C    ", "ADD A,D    ", "ADD A,E    ", "ADD A,H    ", "ADD A,L    ", "ADD A,(HL) ", "ADD A,A    ", "ADC A,B    ", "ADC A,C    ", "ADC A,D    ", "ADC A,E    ", "ADC A,H    ", "ADC A,L    ", "ADC A,(HL) ", "ADC A,A    ", // 80
+	"SUB B      ", "SUB C      ", "SUB D      ", "SUB E      ", "SUB H      ", "SUB L      ", "SUB (HL)   ", "SUB A      ", "SBC A,B    ", "SBC A,C    ", "SBC A,D    ", "SBC A,E    ", "SBC A,H    ", "SBC A,L    ", "SBC A,(HL) ", "SBC A,A    ", // 90
+	"AND B      ", "AND C      ", "AND D      ", "AND E      ", "AND H      ", "AND L      ", "AND (HL)   ", "AND A      ", "XOR B      ", "XOR C      ", "XOR D      ", "XOR E      ", "XOR H      ", "XOR L      ", "XOR (HL)   ", "XOR A      ", // A0
+	"OR B       ", "OR C       ", "OR D       ", "OR E       ", "OR H       ", "OR L       ", "OR (HL)    ", "OR A       ", "CP B       ", "CP C       ", "CP D       ", "CP E       ", "CP H       ", "CP L       ", "CP (HL)    ", "CP A       ", // B0
+	"RET NZ     ", "POP BC     ", "JP NZ,a16  ", "JP a16     ", "CALL NZ,a16", "PUSH BC    ", "ADD A,d8   ", "RST 00H    ", "RET Z      ", "RET        ", "JP Z,a16   ", "PREFIX CB  ", "CALL Z,a16 ", "CALL a16   ", "ADC A,d8   ", "RST 08H    ", // C0
+	"RET NC     ", "POP DE     ", "JP NC,a16  ", "UNKN       ", "CALL NC,a16", "PUSH DE    ", "SUB d8     ", "RST 10H    ", "RET C      ", "RETI       ", "JP C,a16   ", "UNKN       ", "CALL C,a16 ", "UNKN       ", "SBC A,d8   ", "RST 18H    ", // D0
+	"LDH (a8),A ", "POP HL     ", "LD (C),A   ", "UNKN       ", "UNKN       ", "PUSH HL    ", "AND d8     ", "RST 20H    ", "ADD SP,r8  ", "JP (HL)    ", "LD (a16),A ", "UNKN       ", "UNKN       ", "UNKN       ", "XOR d8     ", "RST 28H    ", // E0
+	"LDH A,(a8) ", "POP AF     ", "LD A,(C)   ", "DI         ", "UNKN       ", "PUSH AF    ", "OR d8      ", "RST 30H    ", "LD HL,SP+r8", "LD SP,HL   ", "LD A,(a16) ", "EI         ", "UNKN       ", "UNKN       ", "CP d8      ", "RST 38H    ", // F0
 };
 
 
@@ -2948,7 +2992,7 @@ char * OPName[] = {
 ///////////////// CPU /////////////////
 
 void cpu_init() {
-	A = cartridgeInfo.GBC_MODE ? 0x11: 0x01;
+	A = GBC ? 0x11: 0x01;
 	F = 0xB0, BC = 0x13, DE = 0xD8, HL = 0x014D, SP = 0xFFFE, PC = 0x100;
 	IME = halted = halt_bug = DirectionBtn = ActionBtn = IME_DELAY = double_speed = btn_selector = 0;
 }
