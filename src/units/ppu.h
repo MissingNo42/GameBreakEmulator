@@ -5,16 +5,27 @@
 #ifndef GOBOUEMU_PPU_H
 #define GOBOUEMU_PPU_H
 
-#include "../types.h"
-#include "../io_ram.h"
+////////////////////////  Includes  ///////////////////////////
 
+#include "../types.h"
+#include "../io_ports.h"
+
+
+////////////////////////   Macros   ///////////////////////////
 
 #define inWindow(x) ((x) == (x) && ioLY) //TODO
 #define PPU_MODE (ioSTAT & 3)
 
+
+////////////////////////    Types   ///////////////////////////
+
 Struct {
 	u8 X, Y, tile, attr;
 } ObjAttribute;
+
+Struct {
+	u8 color: 4, palette: 3, bg_priority: 1, priority: 6;
+} Pixel;
 
 Struct {
 	u8 selected_obj[10];           // selected obj at the end of mode 2
@@ -27,22 +38,37 @@ Struct {
 	ctile_low[8], ctile_high[8];
 	
 	s16 dots;
+	u8 shifting: 3;
 	
 } PPU_Mem;
 
+
+//////////////////////  Declarations  /////////////////////////
+
 extern PPU_Mem ppu_mem;
 
-void inline STAT_changed() {
-	ppu_mem.stat_line <<= 1;
-	if (
-			((ioSTAT & 0x44) == 0x44) || // LYC=LY
-			((ioSTAT & 0x23) == 0x22) || // MODE 2
-			((ioSTAT & 0x13) == 0x11) || // MODE 1
-			((ioSTAT & 0x0b) == 0x08))   // MODE 0
-		ppu_mem.stat_line |= 1;
-	if (ppu_mem.stat_line == 1) ioIF |= INT_LCD_STAT;
-}
+
+////////////////////////   Methods   //////////////////////////
+
+void STAT_changed();
 
 void ppu_step(u8 cycles);
+void ppu_reset();
+
+/////////////////////  Registrations  /////////////////////////
+
+Reset(ppu) {
+	ppu_reset();
+}
+
+SaveSize(ppu, sizeof (ppu_mem))
+
+Save(ppu) {
+	save_obj(ppu_mem);
+}
+
+Load(ppu) {
+	load_obj(ppu_mem);
+}
 
 #endif //GOBOUEMU_PPU_H
