@@ -614,7 +614,7 @@ print('// F0\n};\n')
 print("char * OPName[] = {\n\t", end='')
 for u in range(256):
     if u & 15 == 0 and u: print(f"// {(u-1)&0xf0:02X}\n\t", end='')
-    print(f"\"{c[u].n}\", ", end='')
+    print(f"\"{c[u].n:{max(len(i.n) for i in c)}}\", ", end='')
 print('// F0\n};\n')
 
 print("\n#pragma endregion\n")
