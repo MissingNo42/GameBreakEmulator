@@ -8,12 +8,14 @@
 
 ////////////////////////   Macros   ///////////////////////////
 
-#define Reset(name) void inline Reset_##name()
-#define SaveSize(name, size) u16 inline SaveSize_##name() { return size; }
-#define Save(name) void inline Save_##name()
-#define Load(name) void inline Load_##name()
-#define save_obj(obj, sz)
-#define load_obj(obj, sz)
+#define Reset(name) inline static void Reset_##name(u8 hard)
+#define SaveSize(name, size) inline u16 SaveSize_##name() { return size; }
+#define Save(name) inline void Save_##name()
+#define Load(name) inline void Load_##name()
+#define save_obj(obj) // sizeof(obj) | &obj
+#define load_obj(obj)
+
+#define SEGFAULT() *(char*)0 = 1;
 
 
 ////////////////////////    Types   ///////////////////////////
@@ -26,13 +28,14 @@ typedef enum {
 } ELOG;
 
 
-////////////////////////   Methods   ///////////////////////////
+////////////////////////   Methods   //////////////////////////
 
-void Log(ELOG type, char * title, char * str, ...);
+void Log(ELOG type, char lock, const char * title, const char * str, ...);
+void Lock();
 
-#define DEBUG(...) Log(Debug, __VA_ARGS__)
-#define INFO(...) Log(Info, __VA_ARGS__)
-#define ERROR(...) Log(Error, __VA_ARGS__)
-#define CRITICAL(...) Log(Critical, __VA_ARGS__)
+#define DEBUG(...) Log(Debug, 0, __VA_ARGS__)
+#define INFO(...) Log(Info, 0, __VA_ARGS__)
+#define ERROR(...) Log(Error, 1, __VA_ARGS__)
+#define CRITICAL(...) Log(Critical, 1, __VA_ARGS__)
 
 #endif //GOBOUEMU_UTILS_H
