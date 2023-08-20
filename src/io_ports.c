@@ -2,23 +2,31 @@
 // Created by Romain on 27/07/2023.
 //
 
-#include "io_ram.h"
+////////////////////////  Includes  ///////////////////////////
+
+#include "io_ports.h"
 #include "units/cpu.h"
 #include "units/dma.h"
 #include "units/ppu.h"
 
-IO_RAM ioRam;
+
+//////////////////////  Declarations  /////////////////////////
+
+IO_PORTS ioPorts;
+
+
+////////////////////////   Methods   //////////////////////////
 
 /**
- * Interpret given value and write only the readable data to the register
+ * Interprets given value and write only the readable data to the register
  * */
  
-void w00(u16 addr, u8 value) {
+void w00(u16 addr, u8 value) { // P1 - JOYP
 	btn_selector = value >> 4;
-	ioP1 = value & 0x30 // readable?
+	ioP1 = (value & 0x30) // readable?
 	    | (ActionBtn >> (value & 0x20))
 		| (DirectionBtn >> (value & 0x10));
-};
+}
 
 void w01(u16 addr, u8 value) {
 	direct_raw_write_io(addr, value);
@@ -30,8 +38,8 @@ void w02(u16 addr, u8 value) {
 
 #define w03 dummy_write
 
-void w04(u16 addr, u8 value) {
-	direct_raw_write_io(addr, 0x00);
+void w04(u16 addr, u8 value) { // DIV
+	ioDIV = 0x00;
 }
 
 void w05(u16 addr, u8 value) {
@@ -54,8 +62,8 @@ void w07(u16 addr, u8 value) {
 #define w0D dummy_write
 #define w0E dummy_write
 
-void w0F(u16 addr, u8 value) {
-	direct_raw_write_io(addr, value);
+void w0F(u16 addr, u8 value) { // IF
+	direct_raw_write_io(addr, value | 0xe0);
 }
 
 void w10(u16 addr, u8 value) {
@@ -79,6 +87,7 @@ void w14(u16 addr, u8 value) {
 }
 
 #define w15 dummy_write
+
 void w16(u16 addr, u8 value) {
 	direct_raw_write_io(addr, value);
 }
@@ -175,8 +184,9 @@ void w30(u16 addr, u8 value) { // TODO
 #define w3E dummy_write
 #define w3F dummy_write
 
-void w40(u16 addr, u8 value) { // LCDC
+void w40(u16 addr, u8 value) { // LCDC TODO
 	u8 changed = ioLCDC ^ value;
+	ioLCDC = value;
 	// if (changed & 0x1) { // LCDC.0
 	//
 	// }
@@ -199,25 +209,28 @@ void w40(u16 addr, u8 value) { // LCDC
 	//
 	// }
 	if (changed & 0x80) { // LCDC.7
-		if (value & 0x80) ;
-		else {
-			DEBUG("LCDC.7 Switch off", "\n");
+		if (value & 0x80) {
+			DEBUG("LCDC.7 Switch on", "\n");
 		}
+		else {
+			if (PPU_MODE == 1) DEBUG("LCDC.7 Switch off", "during VBLANK\n");
+			else CRITICAL("LCDC.7 Switch off", "during Mode %hhu\n", PPU_MODE);
+		}
+		ppu_reset();
 	}
-	ioLCDC = value;
 }
 
-void w41(u16 addr, u8 value) {
-	ioSTAT = value & 0x78;
+void w41(u16 addr, u8 value) { // STAT
+	ioSTAT = (value & 0x78) | 0x80;
 	STAT_changed();
 }
 
-void w42(u16 addr, u8 value) {
-	direct_raw_write_io(addr, value);
+void w42(u16 addr, u8 value) { // SCY
+	ioSCY = value;
 }
 
-void w43(u16 addr, u8 value) {
-	direct_raw_write_io(addr, value);
+void w43(u16 addr, u8 value) { // SCX
+	ioSCX = value;
 }
 
 #define w44 dummy_write // LY: Read only
@@ -237,60 +250,74 @@ void w46(u16 addr, u8 value) { // OAM DMA
 	}
 }
 
-void w47(u16 addr, u8 value) {
-	direct_raw_write_io(addr, value);
+void w47(u16 addr, u8 value) { // BGP
+	if (!GBC) ioBGP = value;
 }
 
-void w48(u16 addr, u8 value) {
-	direct_raw_write_io(addr, value);
+void w48(u16 addr, u8 value) { // OBP0
+	if (!GBC) ioOBP0 = value & 0xFC;
 }
 
-void w49(u16 addr, u8 value) {
-	direct_raw_write_io(addr, value);
+void w49(u16 addr, u8 value) { // OBP1
+	if (!GBC) ioOBP1 = value & 0xFC;
 }
 
-void w4A(u16 addr, u8 value) {
-	direct_raw_write_io(addr, value);
+void w4A(u16 addr, u8 value) { // WY
+	ioWY = value;
 }
 
-void w4B(u16 addr, u8 value) {
-	direct_raw_write_io(addr, value);
+void w4B(u16 addr, u8 value) { // WX
+	ioWX = value;
 }
 
 #define w4C dummy_write
 
-void w4D(u16 addr, u8 value) {
-	direct_raw_write_io(addr, (double_speed << 7) | (value & 1));
+void w4D(u16 addr, u8 value) { // KEY1
+	if (GBC) ioKEY1 = (double_speed << 7) | (value & 1);
 }
 
 #define w4E dummy_write
-void w4F(u16 addr, u8 value) {
-	direct_raw_write_io(addr, value);
+
+void w4F(u16 addr, u8 value) { // VBK
+	if (GBC) {
+		ioVBK = value | 0xFE;
+		set_vram(value & 1);
+	}
 }
 
-#define w50 dummy_write
-void w51(u16 addr, u8 value) {
-	direct_raw_write_io(addr, value);
+void w50(u16 addr, u8 value) { // BOOTROM UNMAP
+	if (!memoryMap.bootrom_unmapped) {
+		memoryMap.bootrom_unmapped = 1;
+		PC = 0x100;
+		load_cartridge();
+		INFO("BootRom Unmapping", "cartridge fallback at $0100\n");
+	}
 }
 
-void w52(u16 addr, u8 value) {
-	direct_raw_write_io(addr, value);
+void w51(u16 addr, u8 value) { // HDMA1
+	if (GBC) ioHDMA1 = value;
 }
 
-void w53(u16 addr, u8 value) {
-	direct_raw_write_io(addr, value);
+void w52(u16 addr, u8 value) { // HDMA2
+	if (GBC) ioHDMA2 = value & 0xF0;
 }
 
-void w54(u16 addr, u8 value) {
-	direct_raw_write_io(addr, value);
+void w53(u16 addr, u8 value) { // HDMA3
+	if (GBC) ioHDMA3 = (value & 0x1F) | 0x80;
 }
 
-void w55(u16 addr, u8 value) {
-	direct_raw_write_io(addr, value);
+void w54(u16 addr, u8 value) { // HDMA4
+	if (GBC) ioHDMA4 = value & 0xF0;
+}
+
+void w55(u16 addr, u8 value) { // HDMA5
+	if (GBC) {
+		hdma_start(value);
+	}
 }
 
 void w56(u16 addr, u8 value) {
-	direct_raw_write_io(addr, value);
+	if (GBC) ioRP = value;
 }
 
 #define w57 dummy_write
@@ -311,47 +338,49 @@ void w56(u16 addr, u8 value) {
 #define w66 dummy_write
 #define w67 dummy_write
 
-void w68(u16 addr, u8 value) {
+void w68(u16 addr, u8 value) { // BCPS - BGPI
 	ioBCPS = value & 0xbf;
 	ioBCPD = memoryMap.cram[value & 0x3f];
 }
 
-void w69(u16 addr, u8 value) {
-	// TODO: if cram locked
-	ioBCPD = memoryMap.cram[ioBCPS & 0x3f] = value;
+void w69(u16 addr, u8 value) { // BCPD - BGPD
+	if (!memoryMap.ppu_ram_lock) ioBCPD = memoryMap.cram[ioBCPS & 0x3f] = value;
 	
 	if (ioBCPS & 0x80) w68(BCPS, ioBCPS + 1);
 }
 
-void w6A(u16 addr, u8 value) {
+void w6A(u16 addr, u8 value) { // 0CPS - OBPI
 	ioOCPS = value & 0xbf;
-	ioOCPD = memoryMap.cram[value & 0x3f | 0x40];
+	ioOCPD = memoryMap.cram[(value & 0x3f) | 0x40];
 }
 
-void w6B(u16 addr, u8 value) {
-	// TODO: if cram locked
-	ioOCPD = memoryMap.cram[ioOCPS & 0x3f | 0x40] = value;
+void w6B(u16 addr, u8 value) { // OCPD - OBPD
+	if (!memoryMap.ppu_ram_lock) ioOCPD = memoryMap.cram[(ioOCPS & 0x3f) | 0x40] = value;
 	
 	if (ioOCPS & 0x80) w6A(OCPS, ioOCPS + 1);
 }
 
-void w6C(u16 addr, u8 value) {
-	direct_raw_write_io(addr, value);
+void w6C(u16 addr, u8 value) { // OPRI
+	if (GBC & !ioOPRI) ioOPRI = value & 1; // unused, locked
 }
 
 #define w6D dummy_write
 #define w6E dummy_write
 #define w6F dummy_write
 
-void w70(u16 addr, u8 value) {
-	direct_raw_write_io(addr, value);
+void w70(u16 addr, u8 value) { // SVBK
+	if (GBC) {
+		ioSVBK = value & 7;
+		u8 bk = ioSVBK ? ioSVBK : 1;
+		set_wram(bk);
+	}
 }
 
-#define w71 dummy_write
-#define w72 dummy_write
-#define w73 dummy_write
-#define w74 dummy_write
-#define w75 dummy_write
+#define w71 dummy_write // Undoc & unused GBC regs
+#define w72 dummy_write // Undoc & unused GBC regs
+#define w73 dummy_write // Undoc & unused GBC regs
+#define w74 dummy_write // Undoc & unused GBC regs
+#define w75 dummy_write // Undoc & unused GBC regs
 
 void w76(u16 addr, u8 value) {
 	direct_raw_write_io(addr, value);
@@ -369,6 +398,9 @@ void w77(u16 addr, u8 value) {
 #define w7D dummy_write
 #define w7E dummy_write
 #define w7F dummy_write
+
+
+//////////////////////  Declarations  /////////////////////////
 
 writer * IO_wHANDLER[] = {
 	w00, w01, w02, w03, w04, w05, w06, w07, w08, w09, w0A, w0B, w0C, w0D, w0E, w0F, // 00

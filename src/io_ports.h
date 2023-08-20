@@ -2,11 +2,16 @@
 // Created by Romain on 27/07/2023.
 //
 
-#ifndef GOBOUEMU_IO_RAM_H
-#define GOBOUEMU_IO_RAM_H
+#ifndef GOBOUEMU_IO_PORTS_H
+#define GOBOUEMU_IO_PORTS_H
+
+////////////////////////  Includes  ///////////////////////////
 
 #include "types.h"
 #include "units/mmu.h"
+
+
+////////////////////////    Types   ///////////////////////////
 
 Struct {
 	u8
@@ -79,11 +84,17 @@ reg_FF71[5] ,
 reg_PCM12	, //0xFF76
 reg_PCM34	, //0xFF77
 reg_FF78[8] ;
-} IO_RAM;
+} IO_PORTS;
 
-extern IO_RAM ioRam;
 
-// IO Addresses
+//////////////////////  Declarations  /////////////////////////
+
+extern IO_PORTS ioPorts;
+
+
+////////////////////////   Macros   ///////////////////////////
+
+// IO Address
 
 #define P1	    0xFF00
 #define SB	    0xFF01
@@ -152,64 +163,64 @@ extern IO_RAM ioRam;
 
 // IO Direct Access
 
-#define ioP1	    ioRam.reg_P1
-#define ioSB	    ioRam.reg_SB
-#define ioSC	    ioRam.reg_SC
-#define ioDIV	    ioRam.reg_DIV
-#define ioTIMA	ioRam.reg_TIMA
-#define ioTMA	    ioRam.reg_TMA
-#define ioTAC	    ioRam.reg_TAC
-#define ioIF	    ioRam.reg_IF
-#define ioNR10	ioRam.reg_NR10
-#define ioNR11	ioRam.reg_NR11
-#define ioNR12	ioRam.reg_NR12
-#define ioNR13	ioRam.reg_NR13
-#define ioNR14	ioRam.reg_NR14
-#define ioNR21	ioRam.reg_NR21
-#define ioNR22	ioRam.reg_NR22
-#define ioNR23	ioRam.reg_NR23
-#define ioNR24	ioRam.reg_NR24
-#define ioNR30	ioRam.reg_NR30
-#define ioNR31	ioRam.reg_NR31
-#define ioNR32	ioRam.reg_NR32
-#define ioNR33	ioRam.reg_NR33
-#define ioNR34	ioRam.reg_NR34
-#define ioNR41	ioRam.reg_NR41
-#define ioNR42	ioRam.reg_NR42
-#define ioNR43	ioRam.reg_NR43
-#define ioNR44	ioRam.reg_NR44
-#define ioNR50	ioRam.reg_NR50
-#define ioNR51	ioRam.reg_NR51
-#define ioNR52	ioRam.reg_NR52
-#define ioWaveRAM	ioRam.reg_WaveRAM
-#define ioLCDC	ioRam.reg_LCDC
-#define ioSTAT	ioRam.reg_STAT
-#define ioSCY     ioRam.reg_SCY
-#define ioSCX     ioRam.reg_SCX
-#define ioLY      ioRam.reg_LY
-#define ioLYC     ioRam.reg_LYC
-#define ioDMA     ioRam.reg_DMA
-#define ioBGP     ioRam.reg_BGP
-#define ioOBP0	ioRam.reg_OBP0
-#define ioOBP1	ioRam.reg_OBP1
-#define ioWY	    ioRam.reg_WY
-#define ioWX	    ioRam.reg_WX
-#define ioKEY1	ioRam.reg_KEY1
-#define ioVBK	    ioRam.reg_VBK
-#define ioHDMA1	ioRam.reg_HDMA1
-#define ioHDMA2	ioRam.reg_HDMA2
-#define ioHDMA3	ioRam.reg_HDMA3
-#define ioHDMA4	ioRam.reg_HDMA4
-#define ioHDMA5	ioRam.reg_HDMA5
-#define ioRP	    ioRam.reg_RP
-#define ioBCPS	ioRam.reg_BCPS
-#define ioBCPD	ioRam.reg_BCPD
-#define ioOCPS	ioRam.reg_OCPS
-#define ioOCPD	ioRam.reg_OCPD
-#define ioOPRI	ioRam.reg_OPRI
-#define ioSVBK	ioRam.reg_SVBK
-#define ioPCM12	ioRam.reg_PCM12
-#define ioPCM34	ioRam.reg_PCM34
+#define ioP1	    ioPorts.reg_P1
+#define ioSB	    ioPorts.reg_SB
+#define ioSC	    ioPorts.reg_SC
+#define ioDIV	    ioPorts.reg_DIV
+#define ioTIMA	    ioPorts.reg_TIMA
+#define ioTMA	    ioPorts.reg_TMA
+#define ioTAC	    ioPorts.reg_TAC
+#define ioIF	    ioPorts.reg_IF
+#define ioNR10	    ioPorts.reg_NR10
+#define ioNR11	    ioPorts.reg_NR11
+#define ioNR12	    ioPorts.reg_NR12
+#define ioNR13	    ioPorts.reg_NR13
+#define ioNR14	    ioPorts.reg_NR14
+#define ioNR21	    ioPorts.reg_NR21
+#define ioNR22	    ioPorts.reg_NR22
+#define ioNR23	    ioPorts.reg_NR23
+#define ioNR24	    ioPorts.reg_NR24
+#define ioNR30	    ioPorts.reg_NR30
+#define ioNR31	    ioPorts.reg_NR31
+#define ioNR32	    ioPorts.reg_NR32
+#define ioNR33	    ioPorts.reg_NR33
+#define ioNR34	    ioPorts.reg_NR34
+#define ioNR41	    ioPorts.reg_NR41
+#define ioNR42	    ioPorts.reg_NR42
+#define ioNR43	    ioPorts.reg_NR43
+#define ioNR44	    ioPorts.reg_NR44
+#define ioNR50	    ioPorts.reg_NR50
+#define ioNR51	    ioPorts.reg_NR51
+#define ioNR52	    ioPorts.reg_NR52
+#define ioWaveRAM	ioPorts.reg_WaveRAM
+#define ioLCDC	    ioPorts.reg_LCDC
+#define ioSTAT	    ioPorts.reg_STAT
+#define ioSCY       ioPorts.reg_SCY
+#define ioSCX       ioPorts.reg_SCX
+#define ioLY        ioPorts.reg_LY
+#define ioLYC       ioPorts.reg_LYC
+#define ioDMA       ioPorts.reg_DMA
+#define ioBGP       ioPorts.reg_BGP
+#define ioOBP0	    ioPorts.reg_OBP0
+#define ioOBP1	    ioPorts.reg_OBP1
+#define ioWY	    ioPorts.reg_WY
+#define ioWX	    ioPorts.reg_WX
+#define ioKEY1	    ioPorts.reg_KEY1
+#define ioVBK	    ioPorts.reg_VBK
+#define ioHDMA1     ioPorts.reg_HDMA1
+#define ioHDMA2     ioPorts.reg_HDMA2
+#define ioHDMA3     ioPorts.reg_HDMA3
+#define ioHDMA4     ioPorts.reg_HDMA4
+#define ioHDMA5     ioPorts.reg_HDMA5
+#define ioRP	    ioPorts.reg_RP
+#define ioBCPS	    ioPorts.reg_BCPS
+#define ioBCPD	    ioPorts.reg_BCPD
+#define ioOCPS	    ioPorts.reg_OCPS
+#define ioOCPD	    ioPorts.reg_OCPD
+#define ioOPRI	    ioPorts.reg_OPRI
+#define ioSVBK	    ioPorts.reg_SVBK
+#define ioPCM12     ioPorts.reg_PCM12
+#define ioPCM34     ioPorts.reg_PCM34
 
 #define ioJOYP ioP1
 #define ioBGPI ioBCPS
@@ -226,7 +237,25 @@ extern IO_RAM ioRam;
 #define ioLCDC6 (ioLCDC & 0x40)
 #define ioLCDC7 (ioLCDC & 0x80)
 
-// Methods
+
+/////////////////////  Registrations  /////////////////////////
+
+Reset(io_ports) {
+	for (u32 i = 0; i < sizeof(ioPorts); i++) ((u8*)&ioPorts)[i] = 0xFF;
+	
+	ioP1 = 0;
+	ioSB = ioSC = ioDIV = ioTIMA = ioTMA = ioTAC = 0;
+	ioIF = 0;
+	ioLCDC = 0x80;
+	ioSTAT = 2; // MODE 2
+	ioSCX = ioSCY = ioWY = ioWX = 0;
+	ioLY = 0;
+	ioLYC = 0;
+	
+}
+
+
+////////////////////////   Methods   //////////////////////////
 
 extern writer ** io_write_handlers;
 
@@ -236,20 +265,20 @@ extern writer ** io_write_handlers;
 // direct: check io mem access
 // raw: write value only (emu side), then, the readable one
 
-static inline void direct_raw_write_io(u16 addr, u8 value) {
-	memoryMap.io[addr] = value; // ((u8*)ioRam)[addr & 0xff]
+inline void direct_raw_write_io(u16 addr, u8 value) {
+	memoryMap.io[addr] = value; // ((u8*)ioPorts)[addr & 0xff]
 }
 
-static inline void direct_write_io(u16 addr, u8 value) {
+inline void direct_write_io(u16 addr, u8 value) {
 	io_write_handlers[addr](addr, value);
 }
 
-static inline void raw_write_io(u16 addr, u8 value) {
+inline void raw_write_io(u16 addr, u8 value) {
 	if (!memoryMap.dma_lock) direct_raw_write_io(addr, value);
 }
 
-static inline void write_io(u16 addr, u8 value) {
+inline void write_io(u16 addr, u8 value) {
 	if (!memoryMap.dma_lock) direct_write_io(addr, value);
 }
 
-#endif //GOBOUEMU_IO_RAM_H
+#endif //GOBOUEMU_IO_PORTS_H
