@@ -5,7 +5,13 @@
 #ifndef GOBOUEMU_MAPPER_H
 #define GOBOUEMU_MAPPER_H
 
+////////////////////////  Includes  ///////////////////////////
+
 #include "types.h"
+#include "utils.h"
+
+
+////////////////////////    Types   ///////////////////////////
 
 Struct {
 	union {
@@ -32,16 +38,45 @@ Struct {
 	void (* init)();
 } MapperIO;
 
+Union {
+	MBC1 mbc1;
+} MapperData;
+
 Struct {
 	MapperIO io;
-	union {
-		MBC1 mbc1;
-	};
+	MapperData data;
 } Mapper;
 
-extern Mapper mapper;
-extern MapperIO supported_mapper[2];
 
+//////////////////////  Declarations  /////////////////////////
+
+extern Mapper mapper;
+extern const MapperIO supported_mapper[2]; // TODO improve (union: switched Reset)
+
+
+////////////////////////   Methods   //////////////////////////
+
+void mount_mapper();
 void init_mapper();
+
+
+/////////////////////  Registrations  /////////////////////////
+
+Reset(mapper){
+	if (hard) init_mapper();
+	else if (mapper.io.init) mapper.io.init();
+}
+
+SaveSize(mapper, sizeof (mapper.data))
+
+Save(mapper) {
+	save_obj(mapper.data);
+}
+
+Load(mapper) {
+	mount_mapper();
+	load_obj(mapper.data);
+}
+
 
 #endif //GOBOUEMU_MAPPER_H
