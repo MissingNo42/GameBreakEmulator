@@ -5,8 +5,13 @@
 #ifndef GOBOUEMU_CARTRIDGE_H
 #define GOBOUEMU_CARTRIDGE_H
 
+////////////////////////  Includes  ///////////////////////////
+
 #include "utils.h"
 #include "types.h"
+
+
+////////////////////////    Types   ///////////////////////////
 
 /**
  * @brief raw header from GB(C) cartridge
@@ -50,15 +55,13 @@ Struct {
 	u8 has_timer: 1;
 	u8 has_rumble: 1;
 	u8 has_sensor: 1;
-	
-} CartridgeType;
+} CartridgeCapability;
 
 /**
  * @brief decoded useful info from the header
  * */
 Struct {
-	CartridgeType type;
-	u8 GBC_MODE: 1;
+	CartridgeCapability type;
 	u8 rom_bank;
 	u8 ram_bank;
 	u32 rom_size;
@@ -66,16 +69,44 @@ Struct {
 } CartridgeInfo;
 
 
+//////////////////////  Declarations  /////////////////////////
+
 extern CartridgeHeader cartridgeHeader;
 extern CartridgeInfo cartridgeInfo;
+extern u8 GBC;
 
 extern const char * const OCODE[];
 extern const char * const NCODE[];
-extern const CartridgeType CartridgeTypes[];
+extern const CartridgeCapability CartridgeCapabilities[];
 
 
+////////////////////////   Methods   //////////////////////////
 
-u8 load_header(char * fn);
-u8 load_cartridge(char * fn);
+u8 open_cartridge(char * fn);
+u8 load_header();
+u8 load_cartridge();
+
+
+/////////////////////  Registrations  /////////////////////////
+
+Reset(cartridge) {
+	if (hard) {
+		for (u16 i = 0; i < (u16)sizeof(cartridgeHeader); i++) ((u8*)&cartridgeHeader)[i] = 0x00;
+		for (u16 i = 0; i < (u16)sizeof(cartridgeInfo); i++) ((u8*)&cartridgeInfo)[i] = 0x00;
+		load_header();
+	} // else nothing
+}
+
+SaveSize(cartridge, sizeof (cartridgeHeader) + sizeof (cartridgeInfo) )
+
+Save(cartridge) {
+	save_obj(cartridgeHeader);
+	save_obj(cartridgeInfo);
+}
+
+Load(cartridge) {
+	load_obj(cartridgeHeader);
+	load_obj(cartridgeInfo);
+}
 
 #endif //GOBOUEMU_CARTRIDGE_H
