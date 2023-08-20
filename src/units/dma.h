@@ -5,18 +5,63 @@
 #ifndef GOBOUEMU_DMA_H
 #define GOBOUEMU_DMA_H
 
+////////////////////////  Includes  ///////////////////////////
+
 #include "../types.h"
 #include "mmu.h"
 
-#define dma_sync(cycle) if (memoryMap.dma_lock) for (u8 i = 0; i < (cycle); i += 4) dma_run()
+
+////////////////////////   Macros   ///////////////////////////
+
+#define dma_sync(cycles) if (memoryMap.dma_lock) dma_run(cycles)
+#define hdma_running() !(ioHDMA5 & 0x80)
+
+
+////////////////////////    Types   ///////////////////////////
+
+#ifdef LITTLE_ENDIAN
+Union {
+	struct { u16 lo: 4, progress: 7, _u0: 2, hblank: 1, general: 1, current_hblank: 1; };
+	struct { u16 offset: 11, _u1: 5; };
+	u16 hdma;
+} HDMA;
+#else
+Union {
+	struct { u16 current_hblank: 1, general: 1, hblank: 1, _: 2, progress: 7, lo: 4; };
+	struct { u16 _u1: 5, offset: 11; }
+	u16 hdma;
+} HDMA;
+#endif
+
+
+//////////////////////// Declarations ///////////////////////////
 
 extern u8 dma_progess;
+extern HDMA hdma;
 
-void inline dma_start() {
-	dma_progess = 0;
-	Lock_dma();
+
+//////////////////////// Registrations ///////////////////////////
+
+Reset(dma) { dma_progess = 0, hdma.hdma = 0; }
+SaveSize(dma, sizeof(dma_progess) + sizeof(hdma))
+
+Save(dma) {
+	save_obj(dma_progess);
+	save_obj(hdma);
 }
 
-void dma_run();
+Load(dma) {
+	load_obj(dma_progess);
+	load_obj(hdma);
+}
+
+
+////////////////////////   Methods   ///////////////////////////
+
+void dma_start();
+
+void dma_run(u8 cycles);
+void hdma_start(u8 value);
+void hdma_run(u8 cycles);
 
 #endif //GOBOUEMU_DMA_H
