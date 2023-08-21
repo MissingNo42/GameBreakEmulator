@@ -698,7 +698,7 @@ INST(08, LD_(A16)_SP) {
 }  // 08 = LD (a16),SP	 | Fg: - - - - | Sz: 3 | Cc: 20
 
 INST(0A, LD_A_(BC)) {
-	A = cpu_read(0xFF00 | BC);
+	A = cpu_read(BC);
 	return 8;
 }  // 0A = LD A,(BC)	 | Fg: - - - - | Sz: 1 | Cc: 8
 
@@ -723,7 +723,7 @@ INST(16, LD_D_D8) {
 }  // 16 = LD D,d8	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST(1A, LD_A_(DE)) {
-	A = cpu_read(0xFF00 | DE);
+	A = cpu_read(DE);
 	return 8;
 }  // 1A = LD A,(DE)	 | Fg: - - - - | Sz: 1 | Cc: 8
 
@@ -748,7 +748,7 @@ INST(26, LD_H_D8) {
 }  // 26 = LD H,d8	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST(2A, LD_A_(HL_)) {
-	A = cpu_read(0xFF00 | HL++);
+	A = cpu_read(HL++);
 	return 8;
 }  // 2A = LD A,(HL+)	 | Fg: - - - - | Sz: 1 | Cc: 8
 
@@ -773,7 +773,7 @@ INST(36, LD_(HL)_D8) {
 }  // 36 = LD (HL),d8	 | Fg: - - - - | Sz: 2 | Cc: 12
 
 INST(3A, LD_A_(HL-)) {
-	A = cpu_read(0xFF00 | HL--);
+	A = cpu_read(HL--);
 	return 8;
 }  // 3A = LD A,(HL-)	 | Fg: - - - - | Sz: 1 | Cc: 8
 
@@ -813,7 +813,7 @@ INST(45, LD_B_L) {
 }  // 45 = LD B,L	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(46, LD_B_(HL)) {
-	B = cpu_read(0xFF00 | HL);
+	B = cpu_read(HL);
 	return 8;
 }  // 46 = LD B,(HL)	 | Fg: - - - - | Sz: 1 | Cc: 8
 
@@ -853,7 +853,7 @@ INST(4D, LD_C_L) {
 }  // 4D = LD C,L	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(4E, LD_C_(HL)) {
-	C = cpu_read(0xFF00 | HL);
+	C = cpu_read(HL);
 	return 8;
 }  // 4E = LD C,(HL)	 | Fg: - - - - | Sz: 1 | Cc: 8
 
@@ -893,7 +893,7 @@ INST(55, LD_D_L) {
 }  // 55 = LD D,L	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(56, LD_D_(HL)) {
-	D = cpu_read(0xFF00 | HL);
+	D = cpu_read(HL);
 	return 8;
 }  // 56 = LD D,(HL)	 | Fg: - - - - | Sz: 1 | Cc: 8
 
@@ -933,7 +933,7 @@ INST(5D, LD_E_L) {
 }  // 5D = LD E,L	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(5E, LD_E_(HL)) {
-	E = cpu_read(0xFF00 | HL);
+	E = cpu_read(HL);
 	return 8;
 }  // 5E = LD E,(HL)	 | Fg: - - - - | Sz: 1 | Cc: 8
 
@@ -973,7 +973,7 @@ INST(65, LD_H_L) {
 }  // 65 = LD H,L	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(66, LD_H_(HL)) {
-	H = cpu_read(0xFF00 | HL);
+	H = cpu_read(HL);
 	return 8;
 }  // 66 = LD H,(HL)	 | Fg: - - - - | Sz: 1 | Cc: 8
 
@@ -1013,7 +1013,7 @@ INST(6D, LD_L_L) {
 }  // 6D = LD L,L	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(6E, LD_L_(HL)) {
-	L = cpu_read(0xFF00 | HL);
+	L = cpu_read(HL);
 	return 8;
 }  // 6E = LD L,(HL)	 | Fg: - - - - | Sz: 1 | Cc: 8
 
@@ -1088,7 +1088,7 @@ INST(7D, LD_A_L) {
 }  // 7D = LD A,L	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(7E, LD_A_(HL)) {
-	A = cpu_read(0xFF00 | HL);
+	A = cpu_read(HL);
 	return 8;
 }  // 7E = LD A,(HL)	 | Fg: - - - - | Sz: 1 | Cc: 8
 
@@ -1124,7 +1124,7 @@ INST(F9, LD_SP_HL) {
 }  // F9 = LD SP,HL	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(FA, LD_A_(A16)) {
-	A = cpu_read(0xFF00 | OPERAND);
+	A = cpu_read(OPERAND);
 	return 16;
 }  // FA = LD A,(a16)	 | Fg: - - - - | Sz: 3 | Cc: 16
 
@@ -1435,7 +1435,7 @@ INST(10, STOP_0) {
 				} else {
 					ch_speed:
 					double_speed = !double_speed;
-					direct_write_io(KEY1, 0);
+					write_io(KEY1, 0);
 					// TODO: Reset DIV
 				}
 			} else {
@@ -2946,7 +2946,7 @@ static Instruction * HighInstructions[] = {
 	iCBF0, iCBF1, iCBF2, iCBF3, iCBF4, iCBF5, iCBF6, iCBF7, iCBF8, iCBF9, iCBFA, iCBFB, iCBFC, iCBFD, iCBFE, iCBFF, // F0
 };
 
-static u8 const OPSize[] = {
+static u8 OPSize[] = {
 	0, 2, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 1, 0, // 00
 	0, 2, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, // 10
 	1, 2, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, // 20
@@ -2982,6 +2982,22 @@ const char * const OPName[] = {
 	"RET NC     ", "POP DE     ", "JP NC,a16  ", "UNKN       ", "CALL NC,a16", "PUSH DE    ", "SUB d8     ", "RST 10H    ", "RET C      ", "RETI       ", "JP C,a16   ", "UNKN       ", "CALL C,a16 ", "UNKN       ", "SBC A,d8   ", "RST 18H    ", // D0
 	"LDH (a8),A ", "POP HL     ", "LD (C),A   ", "UNKN       ", "UNKN       ", "PUSH HL    ", "AND d8     ", "RST 20H    ", "ADD SP,r8  ", "JP (HL)    ", "LD (a16),A ", "UNKN       ", "UNKN       ", "UNKN       ", "XOR d8     ", "RST 28H    ", // E0
 	"LDH A,(a8) ", "POP AF     ", "LD A,(C)   ", "DI         ", "UNKN       ", "PUSH AF    ", "OR d8      ", "RST 30H    ", "LD HL,SP+r8", "LD SP,HL   ", "LD A,(a16) ", "EI         ", "UNKN       ", "UNKN       ", "CP d8      ", "RST 38H    ", // F0
+	"RLC B      ", "RLC C      ", "RLC D      ", "RLC E      ", "RLC H      ", "RLC L      ", "RLC (HL)   ", "RLC A      ", "RRC B      ", "RRC C      ", "RRC D      ", "RRC E      ", "RRC H      ", "RRC L      ", "RRC (HL)   ", "RRC A      ", // 00
+	"RL B       ", "RL C       ", "RL D       ", "RL E       ", "RL H       ", "RL L       ", "RL (HL)    ", "RL A       ", "RR B       ", "RR C       ", "RR D       ", "RR E       ", "RR H       ", "RR L       ", "RR (HL)    ", "RR A       ", // 10
+	"SLA B      ", "SLA C      ", "SLA D      ", "SLA E      ", "SLA H      ", "SLA L      ", "SLA (HL)   ", "SLA A      ", "SRA B      ", "SRA C      ", "SRA D      ", "SRA E      ", "SRA H      ", "SRA L      ", "SRA (HL)   ", "SRA A      ", // 20
+	"SWAP B     ", "SWAP C     ", "SWAP D     ", "SWAP E     ", "SWAP H     ", "SWAP L     ", "SWAP (HL)  ", "SWAP A     ", "SRL B      ", "SRL C      ", "SRL D      ", "SRL E      ", "SRL H      ", "SRL L      ", "SRL (HL)   ", "SRL A      ", // 30
+	"BIT 0,B    ", "BIT 0,C    ", "BIT 0,D    ", "BIT 0,E    ", "BIT 0,H    ", "BIT 0,L    ", "BIT 0,(HL) ", "BIT 0,A    ", "BIT 1,B    ", "BIT 1,C    ", "BIT 1,D    ", "BIT 1,E    ", "BIT 1,H    ", "BIT 1,L    ", "BIT 1,(HL) ", "BIT 1,A    ", // 40
+	"BIT 2,B    ", "BIT 2,C    ", "BIT 2,D    ", "BIT 2,E    ", "BIT 2,H    ", "BIT 2,L    ", "BIT 2,(HL) ", "BIT 2,A    ", "BIT 3,B    ", "BIT 3,C    ", "BIT 3,D    ", "BIT 3,E    ", "BIT 3,H    ", "BIT 3,L    ", "BIT 3,(HL) ", "BIT 3,A    ", // 50
+	"BIT 4,B    ", "BIT 4,C    ", "BIT 4,D    ", "BIT 4,E    ", "BIT 4,H    ", "BIT 4,L    ", "BIT 4,(HL) ", "BIT 4,A    ", "BIT 5,B    ", "BIT 5,C    ", "BIT 5,D    ", "BIT 5,E    ", "BIT 5,H    ", "BIT 5,L    ", "BIT 5,(HL) ", "BIT 5,A    ", // 60
+	"BIT 6,B    ", "BIT 6,C    ", "BIT 6,D    ", "BIT 6,E    ", "BIT 6,H    ", "BIT 6,L    ", "BIT 6,(HL) ", "BIT 6,A    ", "BIT 7,B    ", "BIT 7,C    ", "BIT 7,D    ", "BIT 7,E    ", "BIT 7,H    ", "BIT 7,L    ", "BIT 7,(HL) ", "BIT 7,A    ", // 70
+	"RES 0,B    ", "RES 0,C    ", "RES 0,D    ", "RES 0,E    ", "RES 0,H    ", "RES 0,L    ", "RES 0,(HL) ", "RES 0,A    ", "RES 1,B    ", "RES 1,C    ", "RES 1,D    ", "RES 1,E    ", "RES 1,H    ", "RES 1,L    ", "RES 1,(HL) ", "RES 1,A    ", // 80
+	"RES 2,B    ", "RES 2,C    ", "RES 2,D    ", "RES 2,E    ", "RES 2,H    ", "RES 2,L    ", "RES 2,(HL) ", "RES 2,A    ", "RES 3,B    ", "RES 3,C    ", "RES 3,D    ", "RES 3,E    ", "RES 3,H    ", "RES 3,L    ", "RES 3,(HL) ", "RES 3,A    ", // 90
+	"RES 4,B    ", "RES 4,C    ", "RES 4,D    ", "RES 4,E    ", "RES 4,H    ", "RES 4,L    ", "RES 4,(HL) ", "RES 4,A    ", "RES 5,B    ", "RES 5,C    ", "RES 5,D    ", "RES 5,E    ", "RES 5,H    ", "RES 5,L    ", "RES 5,(HL) ", "RES 5,A    ", // A0
+	"RES 6,B    ", "RES 6,C    ", "RES 6,D    ", "RES 6,E    ", "RES 6,H    ", "RES 6,L    ", "RES 6,(HL) ", "RES 6,A    ", "RES 7,B    ", "RES 7,C    ", "RES 7,D    ", "RES 7,E    ", "RES 7,H    ", "RES 7,L    ", "RES 7,(HL) ", "RES 7,A    ", // B0
+	"SET 0,B    ", "SET 0,C    ", "SET 0,D    ", "SET 0,E    ", "SET 0,H    ", "SET 0,L    ", "SET 0,(HL) ", "SET 0,A    ", "SET 1,B    ", "SET 1,C    ", "SET 1,D    ", "SET 1,E    ", "SET 1,H    ", "SET 1,L    ", "SET 1,(HL) ", "SET 1,A    ", // C0
+	"SET 2,B    ", "SET 2,C    ", "SET 2,D    ", "SET 2,E    ", "SET 2,H    ", "SET 2,L    ", "SET 2,(HL) ", "SET 2,A    ", "SET 3,B    ", "SET 3,C    ", "SET 3,D    ", "SET 3,E    ", "SET 3,H    ", "SET 3,L    ", "SET 3,(HL) ", "SET 3,A    ", // D0
+	"SET 4,B    ", "SET 4,C    ", "SET 4,D    ", "SET 4,E    ", "SET 4,H    ", "SET 4,L    ", "SET 4,(HL) ", "SET 4,A    ", "SET 5,B    ", "SET 5,C    ", "SET 5,D    ", "SET 5,E    ", "SET 5,H    ", "SET 5,L    ", "SET 5,(HL) ", "SET 5,A    ", // E0
+	"SET 6,B    ", "SET 6,C    ", "SET 6,D    ", "SET 6,E    ", "SET 6,H    ", "SET 6,L    ", "SET 6,(HL) ", "SET 6,A    ", "SET 7,B    ", "SET 7,C    ", "SET 7,D    ", "SET 7,E    ", "SET 7,H    ", "SET 7,L    ", "SET 7,(HL) ", "SET 7,A    ", // F0
 };
 
 
