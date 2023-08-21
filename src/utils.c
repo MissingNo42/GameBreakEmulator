@@ -19,7 +19,7 @@ void Log(ELOG type, char lock, const char * title, const char * str, ...){
 	struct tm tm = *localtime(&t);
 	printf("\x1b[38;5;%dm%d-%02d-%02d %02d:%02d:%02d ($%04X %s [%02X] %04X): %s\x1b[0m\t",
 		   type, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec,
-		   PCX, OPName[OPCODE], OPCODE, OPERAND, title);
+		   PCX, OPCODE == 0xCB ? OPName[0x100 | O1]: OPName[OPCODE], OPCODE, OPERAND, title);
 	va_list l;
 	va_start(l, str);
 	if (str) vprintf(str, l);
