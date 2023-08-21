@@ -29,10 +29,10 @@ void dma_start() {
 
 void dma_run(u8 cycles) {
 	do {
+		direct_write_oam(OAM | dma_progess, read((ioDMA << 8) | dma_progess)); // copy
 		dma_progess++;
 		
-		direct_write_oam(OAM | dma_progess, read((ioDMA << 8) | dma_progess)); // copy
-		if (dma_progess != 0xA0) {
+		if (dma_progess == 0xA0) {
 			Unlock_dma();
 			DEBUG("DMA End", "\n");
 			break;
