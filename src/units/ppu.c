@@ -81,12 +81,13 @@ static inline void mode_1_start() {
 	set_mode_1();
 	ioIF |= INT_VBLANK; // Request VBLANK interrupt
 	ppu_mem.dots = 456;
+	ppu_mem.frame_ready = 1;
 	//TODO Frame ready
 }
 
 static inline void mode_1_end() {
 	if (ioLY == 153) { // Mode 1 End
-		ERROR("PPU Cycle 70224?: ", "%u %hhu\n", ccc, ioLY);
+		//ERROR("PPU Cycle 70224?: ", "%u %hhu\n", ccc, ioLY);
 		ioLY = 0;
 		ccc = 0;
 		mode_2_start();
@@ -254,6 +255,8 @@ void ppu_reset() {
 	} else { // LCD Off
 		ioLY = 0;
 		set_mode_1(); // mode_1_start();
+		Unlock_ppu_oam();
+		Unlock_ppu_ram();
 		INFO("PPU Stop", "Mode 1\n");
 	}
 	STAT_changed(); // needed/required ??   may interrupt on invalid switch off (outside vblank)

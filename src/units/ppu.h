@@ -15,6 +15,7 @@
 
 #define inWindow(x) ((x) == (x) && ioLY) //TODO
 #define PPU_MODE (ioSTAT & 3)
+#define isFrameReady() ppu_mem.frame_ready
 
 
 ////////////////////////    Types   ///////////////////////////
@@ -39,7 +40,7 @@ Struct {
 	
 	s16 dots;
 	u8 shifting: 3;
-	
+	u8 frame_ready: 1;
 } PPU_Mem;
 
 
