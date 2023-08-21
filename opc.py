@@ -141,7 +141,7 @@ class i:
                     h += f"\tcpu_write({a} + 1, {b} >> 8);\n"
             elif '(' in b:
                 b = b[1:-1]
-                if b  in ['O1', 'O2'] or len(a) == 1: b = "0xFF00 | " + b 
+                if b  in ['O1', 'O2'] or len(b) == 1: b = "0xFF00 | " + b 
                 h += f"\t{a} = cpu_read({b});\n"
             elif "r8" in b:
                 h+=f"\tADD_SP_d(O1, {a});\n"
@@ -250,9 +250,9 @@ class i:
             if '(' in a:
                 a = a[1:-1]
                 h += f"\tu8 r = cpu_read({a});\n"
-                h += f"\tADD_SP(r, SP);\n"
+                h += f"\tADD_SP(r);\n"
             else:
-                h += f"\tADD_SP({a}, SP);\n"
+                h += f"\tADD_SP({a});\n"
             
         elif s.n.startswith('ADD HL'):
             a=s.n.split(" ",1)[-1].split(",",1)[-1].replace('r8', 'O1')
@@ -397,7 +397,7 @@ class i:
         elif s.n.startswith('HALT'):
             h += "\tif (halted) goto dec;\n\n"
             h += "\tif (!IME && ioIF & read_ie()) {\n"
-            h += "\t\tif (cartridgeInfo.GBC_MODE) {}\n"
+            h += "\t\tif (GBC) {}\n"
             h += "\t\telse halt_bug = 1;\n"
             h += "\t} else {\n"
             h += "\t\thalted = 1;\n"
@@ -415,7 +415,7 @@ class i:
 			halted = 1;
 		}
 	} else {
-		if ((ioKEY1 & 1) && cartridgeInfo.GBC_MODE) {
+		if ((ioKEY1 & 1) && GBC) {
 			if (ioIF & read_ie()) {
 				if (IME) {
 					ERROR("STOP Instruction error", "non-deterministic crash\n");
@@ -611,8 +611,8 @@ print('// F0\n};\n')
 
 
 
-print("char * OPName[] = {\n\t", end='')
-for u in range(256):
+print("const char * const OPName[] = {\n\t", end='')
+for u in range(512):
     if u & 15 == 0 and u: print(f"// {(u-1)&0xf0:02X}\n\t", end='')
     print(f"\"{c[u].n:{max(len(i.n) for i in c)}}\", ", end='')
 print('// F0\n};\n')
