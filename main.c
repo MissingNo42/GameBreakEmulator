@@ -69,12 +69,23 @@ int main() {
 	INFO("Gobou Start !", "\n");
 	//cpu_init();
 	//for (u32 i = 0; i < (4194304<<8); i++) {
-	
+	u32 pass = 0;
 	for (u32 i = 0; i < (4000000 * 100); i++) {
 		//if (i > 47000 && ioLY > 0x88 && ioLY < 0x92)
 		//	DEBUG("\t", "%d \t A %02X (z %hhu) | C %02X | E %02X | HL %04X ( LY %hhu 0x%02X)\n", i, A, z, C, E, HL,ioLY, ioLY);
-		if (!(i & 0xffff))
-			DEBUG("\t", "%d \t A %02X (z %hhu) | C %02X | E %02X | HL %04X ( LY %hhu 0x%02X)\n", i, A, z, C, E, HL,ioLY, ioLY);
+		if (!pass) {
+			DEBUG("\t", "%u \t A %02X | B %02X | C %02X | D %02X | E %02X | HL %04X  [%c %c %c %c]  ( LY %hhu 0x%02X)\n", i, A, B, C, D, E, HL,
+				  (z) ? 'Z': 'z', (n) ? 'N': 'n', (h) ? 'H': 'h', (c) ? 'C': 'c',
+			      ioLY, ioLY);
+			if (!(i & 0xf)) {
+				int cu = getchar();
+				if (cu != '\n') {
+					printf("pass:");
+					fflush(stdout);
+					scanf("%u%*c", &pass);
+				}
+			}
+		} else pass--;
 		cpu_run();
 		if (PC > 0x100) break;
 	}
