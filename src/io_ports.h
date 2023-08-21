@@ -246,7 +246,7 @@ Reset(io_ports) {
 	ioP1 = 0;
 	ioSB = ioSC = ioDIV = ioTIMA = ioTMA = ioTAC = 0;
 	ioIF = 0;
-	ioLCDC = 0x80;
+	ioLCDC = 0x00;
 	ioSTAT = 2; // MODE 2
 	ioSCX = ioSCY = ioWY = ioWX = 0;
 	ioLY = 0;
