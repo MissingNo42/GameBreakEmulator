@@ -5,7 +5,6 @@
 ////////////////////////  Includes  ///////////////////////////
 
 #include "mmu.h"
-#include "../mapper.h"
 #include "../io_ports.h"
 #include <malloc.h>
 
@@ -33,7 +32,6 @@ static const u8 BootRom_DMG[0x100] = {	0x31,0xFE,0xFF,0xAF,0x21,0xFF,0x9F,0x32,0
 										0x23,0x7D,0xFE,0x34,0x20,
 										0xF5,0x06,0x19,0x78,0x86,0x23,0x05,0x20,0xFB,0x86,0x20,0xFE,0x3E,0x01,0xE0,0x50};
 
-//static u8 zero_page[0x100];
 
 ////////////////////////   Methods   //////////////////////////
 
@@ -53,8 +51,8 @@ u32 get_size() {
 			+ (0x2000u << GBC)        // VRAM (x2 in GBC)
 			+ (0x2000u << (GBC << 1)) // WRAM (x4 in GBC)
 			+ 0xa0                    // OAM
+			+ 0x80;                   // HRAM + IE
 			//+ 0x80                  // IO Registers
-			+ 0x7f;                   // HRAM // (+ IE) //TODO : add IE to HRAM read/write if HRAM never locked
 			
 	return memoryMap.map_size;
 }
@@ -109,7 +107,6 @@ void map_memory(){
 	memoryMap.oam = memoryMap.wram_sector + (0x2000 << (GBC << 1)) - OAM;
 	memoryMap.io = ((u8 *) &ioPorts) - IO; // see io_ports.c/h  //memoryMap.oam  + 0xa0 + OAM - IO;
 	memoryMap.hram = memoryMap.oam + 0xa0 + OAM - HRAM; //memoryMap.io;//   + 0x80;
-	//memoryMap.ie   = memoryMap.hram + 0x7f + IE;
 }
 
 
@@ -124,12 +121,12 @@ u8 * init_memory(){
 
 /// RW
 
-inline u8 read(u16 addr){
+inline u8 memory_read(u16 addr){
 	if (addr & 0x8000) {
 		if (addr & 0x4000) {
 			if (addr & 0x2000) {
 				if ((addr & OAM) == OAM) {
-					if (addr & 0xFF00) return (addr == 0xFFFF) ? read_ie(): ((addr & 0x80) ? read_hram(addr): read_io(addr));
+					if (addr & 0xFF00) return (addr & 0x80) ? read_hram(addr): read_io(addr);
 					else if ((addr & 0x80) && (addr & 0x60))  {
 						ERROR("Read in Reserved RAM", "$%04X\n", addr);
 						return (memoryMap.oam_lock) ? 0xFF: (addr & 0xF0) | (addr & 0xF0 >> 8); // GBC-E behavior
@@ -141,7 +138,7 @@ inline u8 read(u16 addr){
 				}
 			} else WR: return (addr & 0x1000) ? read_wram1(addr): read_wram0(addr); // WRAM
 		} else return (addr & 0x2000) ? read_xram(addr): read_vram(addr); // XRAM / VRAM
-	} else return (addr & 0x4000) ? read_rom_1(addr): read_rom_0(addr); // ROM
+	} else return (addr & 0x4000) ? read_rom1(addr): read_rom0(addr); // ROM
 }
 
 
@@ -150,7 +147,7 @@ inline u8 direct_read(u16 addr){
 		if (addr & 0x4000) {
 			if (addr & 0x2000) {
 				if ((addr & OAM) == OAM) {
-					if (addr & 0xFF00) return (addr == 0xFFFF) ? direct_read_ie(): ((addr & 0x80) ? direct_read_hram(addr): direct_read_io(addr));
+					if (addr & 0xFF00) return (addr & 0x80) ? direct_read_hram(addr): direct_read_io(addr);
 					else if ((addr & 0x80) && (addr & 0x60))  {
 						ERROR("Read in Reserved RAM", "$%04X\n", addr);
 						return (memoryMap.oam_lock) ? 0xFF: (addr & 0xF0) | (addr & 0xF0 >> 8); // GBC-E behavior
@@ -162,7 +159,7 @@ inline u8 direct_read(u16 addr){
 				}
 			} else WR: return (addr & 0x1000) ? direct_read_wram1(addr): direct_read_wram0(addr); // WRAM
 		} else return (addr & 0x2000) ? direct_read_xram(addr): direct_read_vram(addr); // XRAM / VRAM
-	} else return (addr & 0x4000) ? direct_read_rom_1(addr): direct_read_rom_0(addr); // ROM
+	} else return (addr & 0x4000) ? direct_read_rom1(addr): direct_read_rom0(addr); // ROM
 }
 
 inline void write(u16 addr, u8 value){
@@ -172,7 +169,7 @@ inline void write(u16 addr, u8 value){
 				if ((addr & OAM) == OAM) {
 					if (addr & 0xFF00) {
 						if (addr == 0xFFFF) { write_ie(value); }
-						else if (addr & 0x80) { write_hram(addr, value); }
+						if (addr & 0x80) { write_hram(addr, value); }
 						else write_io(addr, value);
 					} else if ((addr & 0x80) && (addr & 0x60))  {
 						ERROR("Write in Reserved RAM", "$%04X (%hhu | 0x%02X)\n", addr, value, value);
@@ -191,8 +188,8 @@ inline void write(u16 addr, u8 value){
 			if (addr & 0x2000) { write_xram(addr, value); }
 			else { write_vram(addr, value); } // XRAM / VRAM
 		}
-	} else if (addr & 0x4000) { write_rom_1(addr, value); }
-	else { write_rom_0(addr, value); } // ROM
+	} else if (addr & 0x4000) { write_rom1(addr, value); }
+	else { write_rom0(addr, value); } // ROM
 }
 
 inline void direct_write(u16 addr, u8 value){
@@ -221,6 +218,6 @@ inline void direct_write(u16 addr, u8 value){
 			if (addr & 0x2000) { direct_write_xram(addr, value); }
 			else { direct_write_vram(addr, value); } // XRAM / VRAM
 		}
-	} else if (addr & 0x4000) { direct_write_rom_1(addr, value); }
-	else { direct_write_rom_0(addr, value); } // ROM
+	} else if (addr & 0x4000) { direct_write_rom1(addr, value); }
+	else { direct_write_rom0(addr, value); } // ROM
 }

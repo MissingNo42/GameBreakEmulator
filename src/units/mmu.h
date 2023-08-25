@@ -10,6 +10,7 @@
 #include <stddef.h>
 #include "../types.h"
 #include "../cartridge.h"
+#include "../mapper.h"
 
 
 ////////////////////////    Types   ///////////////////////////
@@ -19,16 +20,16 @@
  * */
 Struct {
 	u8 * xram_sector, * vram_sector, * wram_sector; // const
-	u8 * rom0,  // 0000 - 3fff
-	   * rom1,  // 4000 - 7fff
-	   * vram,  // 8000 - 9fff
-	   * xram,  // a000 - bfff
-	   * wram0, // c000 - cfff
-	   * wram1, // d000 - dfff
-	   * oam,   // fe00 - fe9f
-	   * io,    // ff00 - ff7f
-	   * hram,  // ff80 - fffe
-	   ie;      // ffff - ffff (not a ptr bc not needed)
+	u8 * rom0,  // $0000 - $3fff
+	   * rom1,  // $4000 - $7fff
+	   * vram,  // $8000 - $9fff
+	   * xram,  // $a000 - $bfff
+	   * wram0, // $c000 - $cfff
+	   * wram1, // $d000 - $dfff
+	   * oam,   // $fe00 - $fe9f
+	   * io,    // $ff00 - $ff7f
+	   * hram;  // $ff80 - $fffe + IE at $ffff
+	   //ie;    // $ffff - $ffff (not a ptr bc not needed)
     u8 vram_bank: 1, wram_bank: 3; // GBC
 	u8 xram_bank: 4; // TODO verify :4
 	u8 rom0_bank, rom1_bank;
@@ -65,7 +66,6 @@ extern MemoryMap memoryMap;
 #define HRAM  0xFF80
 #define IE    0xFFFF
 
-#define regIE memoryMap.ie
 
 // Mem Lock
 #define Lock_ppu_oam() memoryMap.oam_lock = memoryMap.ppu_oam_lock = 1 // Lock OAM
@@ -87,74 +87,58 @@ extern MemoryMap memoryMap;
 #define set_xram(bank) memoryMap.xram_bank = (bank), memoryMap.xram = (memoryMap.xram_sector + ((bank) << 13) - XRAM)
 
 // Mem Access
+
+/// Macro-form
 #define direct_reader(R, addr) memoryMap.R[addr]
 #define indirect_reader(R, addr, cond) (cond) ? 0xFF : direct_read_##R(addr)
 
 #define direct_writer(R, addr, value) memoryMap.R[addr] = value
 #define indirect_writer(R, addr, value, cond) if (!(cond)) direct_write_##R(addr, value)
 
+/// Inlined-form
+#define mmu_DRX(R, access) inline u8 direct_read_##R(u16 addr) { return access; }
+#define mmu_DWX(R, access) inline void direct_write_##R(u16 addr, u8 value) { access; }
 
-#define  direct_read_ie() memoryMap.ie
-#define direct_write_ie(value) memoryMap.ie = ((value) & 0x1f)
-#define  read_ie() direct_read_ie()
+#define mmu_DR(R) inline u8 direct_read_##R(u16 addr) { return memoryMap.R[addr]; }
+#define mmu_IR(R, cond) inline u8 read_##R(u16 addr) { return (cond) ? 0xFF : direct_read_##R(addr); }
+
+#define mmu_DW(R) inline void direct_write_##R(u16 addr, u8 value) { memoryMap.R[addr] = value; }
+#define mmu_IW(R, cond) inline void write_##R(u16 addr, u8 value) { if (!(cond)) direct_write_##R(addr, value); }
+
+
+#define mmu_D(R) mmu_DR(R) mmu_DW(R)
+#define mmu_DX(R, accessR, accessW) mmu_DRX(R, accessR) mmu_DWX(R, accessW)
+#define mmu_I(R, cond) mmu_IR(R, cond) mmu_IW(R, cond)
+#define mmu_RW(R, cond) mmu_D(R) mmu_I(R, cond)
+#define mmu_RWX(R, accessW, cond) mmu_DR(R) mmu_DWX(R, accessW) mmu_I(R, cond)
+#define mmu_RXW(R, accessR, cond) mmu_DRX(R, accessR) mmu_DW(R) mmu_I(R, cond)
+#define mmu_RXWX(R, accessR, accessW, cond) mmu_DX(R, accessR, accessW) mmu_I(R, cond)
+
+inline u8 direct_read_ie() { return memoryMap.hram[0xFFFF]; }
+inline void direct_write_ie(u8 value) { memoryMap.hram[0xFFFF] = (value & 0x1f); }
+#define read_ie() direct_read_ie()
 #define write_ie(value) direct_write_ie(value)
 
+#define add_interrupt(int) write_ie(read_ie() | (int))
+#define rmv_interrupt(int) write_ie(read_ie() & ~(int))
 
-#define  direct_read_rom_0(addr) direct_reader(rom0, addr)
-#define direct_write_rom_0(addr, value) mapper.io.write_rom0(addr, value)
-#define  read_rom_0(addr) indirect_reader(rom_0, addr, memoryMap.mem_lock)
-#define write_rom_0(addr, value) indirect_writer(rom_0, addr, value, memoryMap.mem_lock)
+mmu_RWX(rom0, mapper.io.write_rom0(addr, value), memoryMap.mem_lock)
+mmu_RWX(rom1, mapper.io.write_rom1(addr, value), memoryMap.mem_lock)
 
+mmu_RW(vram,  memoryMap.vram_lock)
+mmu_RW(cram,  memoryMap.ppu_ram_lock) // addr is offset here
+mmu_RW(wram0, memoryMap.mem_lock)
+mmu_RW(wram1, memoryMap.mem_lock)
+mmu_RW(oam,   memoryMap.oam_lock)
+mmu_RW(hram,  0)
 
-#define  direct_read_rom_1(addr) direct_reader(rom1, addr)
-#define direct_write_rom_1(addr, value) mapper.io.write_rom1(addr, value)
-#define  read_rom_1(addr) indirect_reader(rom_1, addr, memoryMap.mem_lock)
-#define write_rom_1(addr, value) indirect_writer(rom_1, addr, value, memoryMap.mem_lock)
+mmu_RXWX(xram, mapper.io.read_ram(addr), mapper.io.write_ram(addr, value), memoryMap.mem_lock)
 
-
-#define  direct_read_vram(addr) direct_reader(vram, addr)
-#define direct_write_vram(addr, value) direct_writer(vram, addr, value)
-#define  read_vram(addr) indirect_reader(vram, addr, memoryMap.vram_lock)
-#define write_vram(addr, value) indirect_writer(vram, addr, value, memoryMap.vram_lock)
-
-
-#define  direct_read_cram(addr) direct_reader(cram, addr)
-#define direct_write_cram(addr, value) direct_writer(cram, addr, value)
-#define  read_cram(addr) indirect_reader(cram, addr, memoryMap.ppu_ram_lock)
-#define write_cram(addr, value) indirect_writer(cram, addr, value, memoryMap.ppu_ram_lock)
-
-
-#define  direct_read_xram(addr) mapper.io.read_ram(addr)
-#define direct_write_xram(addr, value) mapper.io.write_ram(addr, value)
-#define  read_xram(addr) indirect_reader(xram, addr, memoryMap.mem_lock)
-#define write_xram(addr, value) indirect_writer(xram, addr, value, memoryMap.mem_lock)
-
-
-#define  direct_read_wram0(addr) direct_reader(wram0, addr)
-#define direct_write_wram0(addr, value) direct_writer(wram0, addr, value)
-#define  read_wram0(addr) indirect_reader(wram0, addr, memoryMap.mem_lock)
-#define write_wram0(addr, value) indirect_writer(wram0, addr, value, memoryMap.mem_lock)
-
-
-#define  direct_read_wram1(addr) direct_reader(wram1, addr)
-#define direct_write_wram1(addr, value) direct_writer(wram1, addr, value)
-#define  read_wram1(addr) indirect_reader(wram1, addr, memoryMap.mem_lock)
-#define write_wram1(addr, value) indirect_writer(wram1, addr, value, memoryMap.mem_lock)
-
-
-#define  direct_read_oam(addr) direct_reader(oam, addr)
-#define direct_write_oam(addr, value) direct_writer(oam, addr, value)
-#define  read_oam(addr) indirect_reader(oam, addr, memoryMap.oam_lock)
-#define write_oam(addr, value) indirect_writer(oam, addr, value, memoryMap.oam_lock)
 
 #define direct_read_oam_block(index) ((ObjAttribute *)(memoryMap.oam + OAM))[index]
-#define read_oam_block(index) (memoryMap.dma_lock) ? (ObjAttribute){0xFF, 0xFF, 0xFF, 0xFF} : direct_read_oam_block(index)
-#define read_oam_mode3(offset) (memoryMap.dma_lock) ? direct_reader(oam, OAM | dma_progess) : direct_reader(oam, OAM | (offset))
-
-#define  direct_read_hram(addr) direct_reader(hram, addr)
-#define direct_write_hram(addr, value) direct_writer(hram, addr, value)
-#define  read_hram(addr) direct_read_hram(addr)
-#define write_hram(addr, value) direct_write_hram(addr, value)
+#define read_oam_block(index) ((memoryMap.dma_lock) ? (ObjAttribute){0xFF, 0xFF, 0xFF, 0xFF} : direct_read_oam_block(index))
+#define read_oam_mode3(offset) ((memoryMap.dma_lock) ? direct_reader(oam, OAM | dma_progess) : direct_reader(oam, OAM | (offset)))
+#define read_oam_block_mode3(index) ((memoryMap.dma_lock) ?  direct_read_oam_block((dma_progess & 0xFC) >> 2) : direct_read_oam_block(index))
 
 
 // Interrupt Enum (io: IE)
@@ -175,7 +159,7 @@ u8 * alloc_memory();
 void map_memory();
 void free_memory();
 
-u8 read(u16 addr);
+u8 memory_read(u16 addr);
 void write(u16 addr, u8 value);
 
 u8 direct_read(u16 addr);
