@@ -245,7 +245,7 @@ void w45(u16 addr, u8 value) { // LYC
 void w46(u16 addr, u8 value) { // OAM DMA
 	ioDMA = value;
 	if ((0xE0 & value) != 0xE0) { // <= 0xDF
-		DEBUG("DMA Start", "from %02X00\n", ioDMA);
+		//DEBUG("DMA Start", "from %02X00\n", ioDMA);
 		dma_start();
 	}
 }
