@@ -53,14 +53,14 @@ static inline void sync(u8 cycles) {
 }
 
 static inline u8 cpu_read(u16 addr) {
-	u8 r = read(addr);
+	u8 r = memory_read(addr);
 	sync(4);
 	return r;
 }
 
 static inline u8 fetch_opcode(){
 	PCX = PC;
-	OPCODE = read(PC);
+	OPCODE = cpu_read(PC);
 	if (halt_bug) halt_bug = 0; // dont increment PC once
 	else PC++;
 	return OPCODE;
@@ -68,12 +68,12 @@ static inline u8 fetch_opcode(){
 
 static inline u8 fetch_1operand(){
 	O2 = 0x00; // debug only
-	return (O1 = read(PC++));
+	return (O1 = cpu_read(PC++));
 }
 
 static inline u16 fetch_2operand(){
-	O1 = read(PC++);
-	O2 = read(PC++);
+	O1 = cpu_read(PC++);
+	O2 = cpu_read(PC++);
 	return OPERAND;
 }
 
@@ -87,14 +87,14 @@ static Instruction * HighInstructions[0x100];
 #define INST(code, name) static inline u8 i##code()
 #define INST_H(code, name) static inline u8 iCB##code()
 
-#define ADD(r) u16 R = A + (r), Cx = A ^ (r) ^ R; A = R; c = Cx >> 8; z = !A; h = Cx >> 4; n = 0
-#define ADC(r) u16 R = A + (r) + c, Cx = A ^ (r) ^ R; A = R; c = Cx >> 8; z = !A; h = Cx >> 4; n = 0
+#define ADD(r) u32 R = A + (r), Cx = A ^ (r) ^ R; A = R; c = Cx >> 8; z = !A; h = Cx >> 4; n = 0
+#define ADC(r) u32 R = A + (r) + c, Cx = A ^ (r) ^ R; A = R; c = Cx >> 8; z = !A; h = Cx >> 4; n = 0
 
-#define SUB(r) s16 R = A - (r), Cx = A ^ (r) ^ R; A = R; c = Cx >> 8; z = !A; h = Cx >> 4; n = 1; sync(4)
-#define SBC(r) s16 R = A - (r) - c, Cx = A ^ (r) ^ R; A = R; c = Cx >> 8; z = !A; h = Cx >> 4; n = 1; sync(4)
+#define SUB(r) s32 R = A - (r), Cx = A ^ (r) ^ R; A = R; c = Cx >> 8; z = !A; h = Cx >> 4; n = 1; sync(4)
+#define SBC(r) s32 R = A - (r) - c, Cx = A ^ (r) ^ R; A = R; c = Cx >> 8; z = !A; h = Cx >> 4; n = 1; sync(4)
 
-#define ADD_SP(r) u32 R = SP + (s8)(r), Cx = SP ^ (r) ^ R; SP = R; c = Cx >> 8; h = Cx >> 4; z = n = 0; sync(8)
-#define ADD_SP_d(r, dst) u32 R = SP + (s8)(r), Cx = SP ^ (r) ^ R; (dst) = R; c = Cx >> 8; h = Cx >> 4; z = n = 0; sync(4)
+#define ADD_SP(r) u32 Cx = SP ^ (r) ^ (SP + (r)); SP = SP + (s8)(r); c = Cx >> 8; h = Cx >> 4; z = n = 0; sync(8)
+#define ADD_SP_d(r, dst) u32 Cx = SP ^ (r) ^ (SP + (r)); (dst) = SP + (s8)(r); c = Cx >> 8; h = Cx >> 4; z = n = 0; sync(4)
 #define ADD_HL(r) u32 R = HL + (r), Cx = HL ^ (r) ^ R; HL = R; c = Cx >> 16; h = Cx >> 12; n = 0; sync(4)
 
 #define INC(r) h = ((r) & 0x0F) == 0x0F; (r)++; z = !(r); n = 0
@@ -418,16 +418,18 @@ INST(2F, CPL) {
 }  // 2F = CPL	 | Fg: - 1 1 - | Sz: 1 | Cc: 4
 
 INST(27, DAA) {
-	s16 daa = A;
+	s32 daa = A;
+	
 	if (n) {
-		if (h) daa = (s16)((daa - 0x06) & 0xff);
+		if (h) daa = (daa - 6) & 0xff;
 		if (c) daa -= 0x60;
 	} else {
 		if (h || (daa & 0xf) > 9) daa += 0x06;
 		if (c || daa > 0x9f) daa += 0x60;
 	}
 
-	A = daa, h = 0, z = !A, c = (daa & 0x100) == 0x100;
+	A = daa, h = 0, z = !A;
+	if ((daa & 0x100) == 0x100) c = 1;
 	return 4;
 }  // 27 = DAA	 | Fg: Z - 0 C | Sz: 1 | Cc: 4
 
@@ -3031,7 +3033,7 @@ void cpu_run() { // run 1 loop (>= 1 M-cycle)
 			u8 log = 0;
 			while (!(flag & (1 << log))) log++;
 			
-			direct_write_io(IF, fflag & (~(1 << log)));
+			ioIF = (fflag & (~(1 << log))) | 0xe0;
 			
 			if (halt_bug) halt_bug = 0, PC--; // Push the HALT addr
 			PUSH16(PC);
