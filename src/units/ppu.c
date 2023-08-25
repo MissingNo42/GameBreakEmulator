@@ -8,6 +8,7 @@
 #include "dma.h"
 
 PPU_Mem ppu_mem;
+Screen screen;
 
 static inline void mode_0_start();
 static inline void mode_1_start();
@@ -21,16 +22,31 @@ static inline void mode_3_start();
 
 #define check_lyc() ioSTAT = (ioSTAT & 0xFB) | ((ioLY == ioLYC) << 2)
 
+const RGBPixel DMG_Color[] = {{.color = 0xFFFFFFFF}, {.color = 0xFFAAAAAA}, {.color = 0xFF555555}, {.color = 0xFF000000}};
+
 
 void STAT_changed() {
+	// TODO STAT-BUG + stat_line go down between M2 & LYC
 	ppu_mem.stat_line <<= 1;
-	if (
+	//u8 S;
+	//
+	//if (!GBC) {
+	//	S = ioSTAT;     // Save
+	//	ioSTAT |= 0xF0; // Corrupt
+	//}
+	
+	Check: if (
 			((ioSTAT & 0x44) == 0x44) || // LYC=LY
 			((ioSTAT & 0x23) == 0x22) || // MODE 2
 			((ioSTAT & 0x13) == 0x11) || // MODE 1
 			((ioSTAT & 0x0b) == 0x08))   // MODE 0
 		ppu_mem.stat_line |= 1;
 	if (ppu_mem.stat_line == 1) ioIF |= INT_LCD_STAT;
+	
+	//if (!GBC) {
+	//	ioSTAT = S; // Restore
+	//	goto Check;
+	//}
 }
 
 	static u32 ccc = 0;  ////////////////////////
@@ -121,6 +137,10 @@ static inline u8 mode_1_step(u8 cycles) {
 static inline void mode_2_start() {
 	ppu_mem.selected_num = 0;
 	ppu_mem.current_oam = 0;
+	
+	ppu_mem.wy_condition = ioWY == ioLY;
+	ppu_mem.window_enable = ioLCDC5;
+	
 	Lock_ppu_oam();
 	set_mode_2();
 }
@@ -142,7 +162,7 @@ static inline void mode_2_end() {
 }
 
 static inline u8 mode_2_step(u8 cycles) {
-	//cycles >>= 1; // 1 oam read = 2 cycles
+	//cycles >>= 1; // 1 oam memory_read = 2 cycles
 	
 	u8 sz = ioLCDC2 ? 16 : 8;
 	u8 next = ppu_mem.current_oam + (cycles >> 1);
@@ -150,7 +170,7 @@ static inline u8 mode_2_step(u8 cycles) {
 	
 	if (next > 40) cycles_left = next - 40, next = 40;
 	
-	if (memoryMap.dma_lock) ppu_mem.current_oam = next; // dma -> read FF -> nothing on-screen = selected
+	if (memoryMap.dma_lock) ppu_mem.current_oam = next; // dma -> memory_read FF -> nothing on-screen = selected
 	
 	else for (; ppu_mem.current_oam < next && ppu_mem.selected_num < 10; ppu_mem.current_oam++) {
 		ObjAttribute oa = direct_read_oam_block(ppu_mem.current_oam);
@@ -175,35 +195,53 @@ static inline u8 mode_2_step(u8 cycles) {
 
 #pragma region Mode3
 
-static inline void mode_3_start() {
-	ppu_mem.dots = 376;
-	ppu_mem.X = 0;
-	ppu_mem.shifting = ioSCX & 7;
-	Lock_ppu_ram();
-	set_mode_3();
-	STAT_changed();
-}
 
-static inline void get_tile(){
+static inline void get_tile(s32 X){
 //5: w enable
 //6: w tm
 //4: bg+w data
 //3: bg tm
-	u8 W = inWindow(ppu_mem.X);
-	u16 addr = ((ioLCDC3 && !W)
-			||  (ioLCDC6 && W)) ? 0x9C00: 0x9800;
-	u8 cX, cY;//TODO opti =
-	if (W) {
-		cX = ppu_mem.X;
-		cY = ioLY;
-	}
-	else {
-		cX = (ioSCX + ppu_mem.X);
-		cY = (ioLY + ioSCY);
+
+	u16 addr = ((ioLCDC3 && !ppu_mem.window_visible)
+			||  (ioLCDC6 && ppu_mem.window_visible)) ? 0x9C00: 0x9800;
+	
+	u8 cX = X, cY = ioLY;
+	if (!ppu_mem.window_visible) {
+		cX += ioSCX;
+		cY += ioSCY;
 	}
 	
-	ppu_mem.ctile_index = read_vram(addr + (cX >> 3) + ((cY & 0xF8) << 2));
+	cX >>= 3;
+	cY >>= 3;
+	
+	ppu_mem.ctile_index = (memoryMap.dma_lock) ? 0xFF: read_vram(addr + cX + (cY << 5));
 }
+
+static inline void load_tile_data(u16f addr) {
+	u16f addrh = addr | 1;
+	
+	for (u8f i = 0; i < 8; i++) {
+		ppu_mem.ctile_low[i] = read_vram(addr | (i << 1));
+		ppu_mem.ctile_high[i] = read_vram(addrh | (i << 1));
+	}
+}
+
+static inline void get_tile_data(){
+	u16f addr;
+	if (ioLCDC4) { // 8000
+		addr = 0x8000 | (ppu_mem.ctile_index << 4);
+	} else { // 8800
+		ppu_mem.ctile_index ^= 0x80;
+		addr = 0x8800 + (ppu_mem.ctile_index << 4);
+	}
+	
+	load_tile_data(addr);
+}
+
+static inline void get_tile_data_obj(u8 tile){
+	load_tile_data(0x8000 | (tile << 4));
+}
+
 
 static inline void get_tile_low(){
 	u16 addr;
@@ -231,10 +269,107 @@ static inline void get_tile_high(){
 	}
 }
 
+static inline void prerender_bg() {
+	s32 X = 0, Y = (ioLY + (ioSCY & 7)) & 7;
+	
+	s32 bg_limit = (ppu_mem.wy_condition && ppu_mem.window_enable && (ioWX - 7 < 160)) ? ioWX - 7: 160;
+	
+	s32 offset = (ppu_mem.shifting ^ 7) + 1;
+	get_tile(0);
+	get_tile_data();
+	
+	loop: for (X; X < bg_limit; X++) { // BG (first loop) | Window (second loop)
+		if (!offset) {
+			get_tile(X);
+			get_tile_data();
+			offset = 8;
+		}
+		
+		offset--;
+		ppu_mem.bg[X].color = (((ppu_mem.ctile_high[Y] >> offset) & 1) << 1) | ((ppu_mem.ctile_low[Y] >> offset) & 1);
+	}
+	
+	if (X < 160) {
+		ppu_mem.window_visible = 1;
+		bg_limit = 160;
+		offset = 0;
+		goto loop;
+	}
+}
+
+static inline void prerender_obj() {
+	
+	for (s32 X = 0; X < 160; X++) ppu_mem.obj[X].raw = 0; // Clear
+	
+	for (s32 obj = ppu_mem.selected_num - 1; obj >= 0; obj--) { // Iter in reverse order to deal with priority more easily
+		ObjAttribute oa = read_oam_block_mode3(ppu_mem.selected_obj[obj]);
+		s32 Y = ioLY - oa.Y + 16;
+		INFO("M2", "%d %d | %d %d\n", ppu_mem.selected_num, obj, Y, oa.X-8);
+		
+		if (ioLCDC2) get_tile_data_obj((Y & 8) ? (oa.tile | 1): (oa.tile & 0xFE));
+		else get_tile_data_obj(oa.tile); // assume Y is valid (never > 8 / > 16)
+		Y &= 7;
+		if (oa.h_flip) Y ^= 7;
+		
+		s32 X = oa.X - 8;
+		for (s32 offset = 0; !(offset & 8) && X < 160; X++, offset++) {
+			s32 f_offset = (oa.v_flip) ? offset : offset ^ 7;
+			s32 color = (((ppu_mem.ctile_high[Y] >> f_offset) & 1) << 1) | ((ppu_mem.ctile_low[Y] >> f_offset) & 1);
+			
+			if (color) { // color over priority-lower color OR color over alpha
+				ppu_mem.obj[X].bg_priority = oa.bg_priority;
+				ppu_mem.obj[X].priority = oa.X;
+				ppu_mem.obj[X].palette = oa.dmg_pal;
+				
+				ppu_mem.obj[X].color = color;
+			}
+		}
+	}
+}
+
+static inline void render_blend() {
+	
+	for (s32 X = 0; X < 160; X++) {
+		if (ppu_mem.obj[X].bg_priority || !ppu_mem.obj[X].color) {
+			screen[ioLY][X] = DMG_Color[(ioBGP >> (ppu_mem.bg[X].color << 1)) & 3];
+		} else {
+			screen[ioLY][X] = DMG_Color[((ppu_mem.obj[X].palette ? ioOBP1: ioOBP0) >> (ppu_mem.obj[X].color << 1)) & 3];
+		}
+	}
+}
+
+static inline void mode_3_start() {
+	ppu_mem.dots = 376;
+	ppu_mem.X = 0;
+	ppu_mem.sleep = ppu_mem.shifting = ioSCX & 7;
+	ppu_mem.loaded = 0;
+	ppu_mem.current_oam = 0;
+	ppu_mem.window_visible = 0;
+	
+	prerender_bg();
+	prerender_obj();
+	
+	ppu_mem.sleep += 8 * ppu_mem.selected_num + 174 + 6 * ppu_mem.window_visible;
+	
+	Lock_ppu_ram();
+	set_mode_3();
+	STAT_changed();
+}
+
+
 static inline u8 mode_3_step(u8 cycles){ // 289-172
-	ppu_mem.dots -= (s16)cycles;
-	if (ppu_mem.dots < 100) mode_0_start();
-	return 0;
+	
+	do {
+		ppu_mem.dots--;
+	} while (--cycles && --ppu_mem.sleep);
+	
+	if (!ppu_mem.sleep) {
+		render_blend();
+		mode_0_start();
+		//INFO("M3 T: ", "%d\n", 376-ppu_mem.dots);
+	}
+	
+	return cycles;
 }
 
 #pragma endregion
