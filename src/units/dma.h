@@ -19,7 +19,7 @@
 
 ////////////////////////    Types   ///////////////////////////
 
-#ifdef LITTLE_ENDIAN
+#ifdef IS_LITTLE_ENDIAN
 Union {
 	struct { u16 lo: 4, progress: 7, _u0: 2, hblank: 1, general: 1, current_hblank: 1; };
 	struct { u16 offset: 11, _u1: 5; };

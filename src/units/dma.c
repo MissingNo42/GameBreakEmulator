@@ -4,6 +4,7 @@
 
 ////////////////////////  Includes  ///////////////////////////
 
+#include <stdio.h>
 #include "dma.h"
 #include "../io_ports.h"
 
@@ -29,12 +30,12 @@ void dma_start() {
 
 void dma_run(u8 cycles) {
 	do {
-		direct_write_oam(OAM | dma_progess, read((ioDMA << 8) | dma_progess)); // copy
+		direct_write_oam(OAM | dma_progess, direct_read((ioDMA << 8) | dma_progess)); // copy
 		dma_progess++;
 		
 		if (dma_progess == 0xA0) {
 			Unlock_dma();
-			DEBUG("DMA End", "\n");
+			//DEBUG("DMA End", "\n");
 			break;
 		} // relock or END
 	} while (--cycles);
@@ -64,7 +65,7 @@ void hdma_run(u8 cycles) {
 	u16 src = HDMA_SRC + hdma.offset, dst = HDMA_DST + hdma.offset;
 	
 	do {
-		direct_write_vram(dst++, read(src++));
+		direct_write_vram(dst++, memory_read(src++));
 		hdma.offset++;
 	} while (--cycles && hdma.lo);
 	
