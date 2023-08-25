@@ -82,7 +82,7 @@ extern const CartridgeCapability CartridgeCapabilities[];
 
 ////////////////////////   Methods   //////////////////////////
 
-u8 open_cartridge(char * fn);
+u8 open_cartridge(const char * const fn);
 u8 load_header();
 u8 load_cartridge();
 

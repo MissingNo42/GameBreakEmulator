@@ -70,7 +70,7 @@ u16 gchecksum(){
 	u16 c = - Memory[0x14e] - Memory[0x14f];
 	for (u32 i = 0; i < cartridgeInfo.rom_size; i++) c += Memory[i];
 	
-	#ifdef LITTLE_ENDIAN
+	#ifdef IS_LITTLE_ENDIAN
 	return c >> 8 | c << 8;
 	#else
 	return c;
@@ -93,7 +93,7 @@ void load_info(){
 	cartridgeInfo.ram_size = cartridgeInfo.ram_bank << 13;
 }
 
-u8 open_cartridge(char * fn) {
+u8 open_cartridge(const char * const fn) {
 	file = fopen(fn, "rb");
 	
 	if (file) INFO("Cartridge file found", "file: '%s'\n", fn);
@@ -152,7 +152,7 @@ u8 load_header() {
 			return 1;
 		}
 	} else
-		CRITICAL("Cannot read header", "\n");
+		CRITICAL("Cannot memory_read header", "\n");
 	return 0;
 }
 
@@ -172,7 +172,7 @@ u8 load_cartridge() {
 		if (c != cartridgeHeader.checksum) ERROR( "Invalid global checksum", "header: %04X / computed: %04X\n", cartridgeHeader.checksum, c);
 
 	} else
-		CRITICAL("Cannot (fully) read the cartridge file", "\n");
+		CRITICAL("Cannot (fully) memory_read the cartridge file", "\n");
 
 	return ok;
 }
