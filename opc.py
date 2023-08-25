@@ -363,15 +363,16 @@ class i:
             pass
         
         elif s.n.startswith('DAA'):
-            h += f"\ts16 daa = A;\n"
+            h += f"\ts32 daa = A;\n"
             h += f"\tif (n) {{\n"
-            h += f"\t\tif (h) daa = (s16)((daa - 0x06) & 0xff);\n"
+            h += f"\t\tif (h) daa = (daa - 0x06) & 0xff;\n"
             h += f"\t\tif (c) daa -= 0x60;\n"
             h += f"\t}} else {{\n"
             h += f"\t\tif (h || (daa & 0xf) > 9) daa += 0x06;\n"
             h += f"\t\tif (c || daa > 0x9f) daa += 0x60;\n"
             h += f"\t}}\n\n"
-            h += f"\tA = daa, h = 0, z = !A, c = (daa & 0x100) == 0x100;\n"
+            h += f"\tA = daa, h = 0, z = !A;\n"
+            h += f"\tif ((daa & 0x100) == 0x100) c = 1;\n"
         
         elif s.n.startswith('RLCA'):
             h += f"\tRLCA();\n"
