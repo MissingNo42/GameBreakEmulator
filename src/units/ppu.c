@@ -105,6 +105,7 @@ static inline void mode_1_end() {
 	if (ioLY == 153) { // Mode 1 End
 		//ERROR("PPU Cycle 70224?: ", "%u %hhu\n", ccc, ioLY);
 		ioLY = 0;
+		ppu_mem.WLY = 0;
 		ccc = 0;
 		mode_2_start();
 	} else { // Mode 1 Continue
@@ -138,8 +139,7 @@ static inline void mode_2_start() {
 	ppu_mem.selected_num = 0;
 	ppu_mem.current_oam = 0;
 	
-	ppu_mem.wy_condition = ioWY == ioLY;
-	ppu_mem.window_enable = ioLCDC5;
+	ppu_mem.wy_condition = ioWY <= ioLY;
 	
 	Lock_ppu_oam();
 	set_mode_2();
@@ -197,32 +197,30 @@ static inline u8 mode_2_step(u8 cycles) {
 
 
 static inline void get_tile(s32 X){
-//5: w enable
-//6: w tm
-//4: bg+w data
-//3: bg tm
-
 	u16 addr = ((ioLCDC3 && !ppu_mem.window_visible)
 			||  (ioLCDC6 && ppu_mem.window_visible)) ? 0x9C00: 0x9800;
 	
 	u8 cX = X, cY = ioLY;
-	if (!ppu_mem.window_visible) {
+	if (ppu_mem.window_visible) {
+		cX -= ioWX - 7;
+		cY = ppu_mem.WLY;
+	} else {
 		cX += ioSCX;
-		cY += ioSCY;
+		cY = ioLY + ioSCY;
 	}
 	
-	cX >>= 3;
-	cY >>= 3;
+	cX >>= 3; // pix coord -> tile coord
+	cY >>= 3; // pix coord -> tile coord
 	
-	ppu_mem.ctile_index = (memoryMap.dma_lock) ? 0xFF: read_vram(addr + cX + (cY << 5));
+	ppu_mem.ctile_index = direct_read_vram(addr + cX + (cY << 5)); //(memoryMap.dma_lock) ? 0xFF:  -> LY0 blink due to bad mode3 timing
 }
 
 static inline void load_tile_data(u16f addr) {
 	u16f addrh = addr | 1;
 	
 	for (u8f i = 0; i < 8; i++) {
-		ppu_mem.ctile_low[i] = read_vram(addr | (i << 1));
-		ppu_mem.ctile_high[i] = read_vram(addrh | (i << 1));
+		ppu_mem.ctile_low[i] = direct_read_vram(addr | (i << 1));
+		ppu_mem.ctile_high[i] = direct_read_vram(addrh | (i << 1));
 	}
 }
 
@@ -243,32 +241,6 @@ static inline void get_tile_data_obj(u8 tile){
 }
 
 
-static inline void get_tile_low(){
-	u16 addr;
-	if (ioLCDC4) { // 8000
-		addr = 0x8000 | (ppu_mem.ctile_index << 4);
-	} else { // 8800
-		ppu_mem.ctile_index ^= 0x80;
-		addr = 0x8800 | (ppu_mem.ctile_index << 4);
-	}
-	for (u8 i = 0; i < 8; i++) {
-		ppu_mem.ctile_low[i] = read_vram(addr | (i << 1));
-	}
-}
-
-static inline void get_tile_high(){
-	u16 addr;
-	if (ioLCDC4) { // 8000
-		addr = 0x8001 | (ppu_mem.ctile_index << 4);
-	} else { // 8800
-		ppu_mem.ctile_index ^= 0x80;
-		addr = 0x8801 | (ppu_mem.ctile_index << 4);
-	}
-	for (u8 i = 0; i < 8; i++) {
-		ppu_mem.ctile_high[i] = read_vram(addr | (i << 1));
-	}
-}
-
 static inline void prerender_bg() {
 	s32 X = 0, Y = (ioLY + (ioSCY & 7)) & 7;
 	
@@ -278,7 +250,7 @@ static inline void prerender_bg() {
 	get_tile(0);
 	get_tile_data();
 	
-	loop: for (X; X < bg_limit; X++) { // BG (first loop) | Window (second loop)
+	loop: for (; X < bg_limit; X++) { // BG (first loop) | Window (second loop)
 		if (!offset) {
 			get_tile(X);
 			get_tile_data();
@@ -292,9 +264,16 @@ static inline void prerender_bg() {
 	if (X < 160) {
 		ppu_mem.window_visible = 1;
 		bg_limit = 160;
-		offset = 0;
+		if (ioWX & 0xf8) offset = 0;
+		else {
+			offset = ioWX + 1;
+			get_tile(X);
+			get_tile_data();
+		}
 		goto loop;
 	}
+	
+	if (ppu_mem.window_visible) ppu_mem.WLY++;
 }
 
 static inline void prerender_obj() {
@@ -304,16 +283,15 @@ static inline void prerender_obj() {
 	for (s32 obj = ppu_mem.selected_num - 1; obj >= 0; obj--) { // Iter in reverse order to deal with priority more easily
 		ObjAttribute oa = read_oam_block_mode3(ppu_mem.selected_obj[obj]);
 		s32 Y = ioLY - oa.Y + 16;
-		INFO("M2", "%d %d | %d %d\n", ppu_mem.selected_num, obj, Y, oa.X-8);
 		
+		if (oa.v_flip) Y ^= 0xF; // switch the to tiles
 		if (ioLCDC2) get_tile_data_obj((Y & 8) ? (oa.tile | 1): (oa.tile & 0xFE));
 		else get_tile_data_obj(oa.tile); // assume Y is valid (never > 8 / > 16)
 		Y &= 7;
-		if (oa.h_flip) Y ^= 7;
 		
 		s32 X = oa.X - 8;
 		for (s32 offset = 0; !(offset & 8) && X < 160; X++, offset++) {
-			s32 f_offset = (oa.v_flip) ? offset : offset ^ 7;
+			s32 f_offset = (oa.h_flip) ? offset : offset ^ 7;
 			s32 color = (((ppu_mem.ctile_high[Y] >> f_offset) & 1) << 1) | ((ppu_mem.ctile_low[Y] >> f_offset) & 1);
 			
 			if (color) { // color over priority-lower color OR color over alpha
@@ -330,9 +308,9 @@ static inline void prerender_obj() {
 static inline void render_blend() {
 	
 	for (s32 X = 0; X < 160; X++) {
-		if (ppu_mem.obj[X].bg_priority || !ppu_mem.obj[X].color) {
+		if (ioLCDC0 && ((ppu_mem.obj[X].bg_priority && !ppu_mem.bg[X].color) || !ppu_mem.obj[X].color)) {
 			screen[ioLY][X] = DMG_Color[(ioBGP >> (ppu_mem.bg[X].color << 1)) & 3];
-		} else {
+		} else if (ioLCDC1) {
 			screen[ioLY][X] = DMG_Color[((ppu_mem.obj[X].palette ? ioOBP1: ioOBP0) >> (ppu_mem.obj[X].color << 1)) & 3];
 		}
 	}
@@ -345,6 +323,7 @@ static inline void mode_3_start() {
 	ppu_mem.loaded = 0;
 	ppu_mem.current_oam = 0;
 	ppu_mem.window_visible = 0;
+	ppu_mem.window_enable = ioLCDC5 >> 5;
 	
 	prerender_bg();
 	prerender_obj();

@@ -24,7 +24,7 @@
 Struct {
 	u8 Y, X, tile;
 	union {
-		struct {u8 gbc_pal: 2, gbc_vram: 1, dmg_pal: 1, h_flip: 1, v_flip: 1, bg_priority: 1;};
+		struct {u8 gbc_pal: 3, gbc_vram: 1, dmg_pal: 1, h_flip: 1, v_flip: 1, bg_priority: 1;};
 		u8 attr;
 	};
 } ObjAttribute;
