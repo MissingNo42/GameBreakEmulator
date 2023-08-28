@@ -2,8 +2,8 @@
 // Created by Romain on 21/08/2023.
 //
 
-#ifndef GOBOUEMU_CORE_H
-#define GOBOUEMU_CORE_H
+#ifndef GBEMU_CORE_H
+#define GBEMU_CORE_H
 
 #include "cartridge.h"
 #include "io_ports.h"
@@ -13,6 +13,7 @@
 #include "units/mmu.h"
 #include "units/ctrl.h"
 #include "mapper.h"
+#include "timer.h"
 #include "utils.h"
 
 //#include <pthread.h>
@@ -22,4 +23,4 @@
 void emulator_start(const char * const fn);
 int emulator_loop(void * uns);
 
-#endif //GOBOUEMU_CORE_H
+#endif //GBEMU_CORE_H

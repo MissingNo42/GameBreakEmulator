@@ -10,7 +10,7 @@
 //th
 
 void emulator_start(const char * const fn) {
-	INFO("GobouEmulator starting", "cartridge file = %s\n", fn);
+	INFO("GameBreakEmulator starting", "cartridge file = %s\n", fn);
 	
 	open_cartridge(fn);
 	
@@ -19,6 +19,7 @@ void emulator_start(const char * const fn) {
 	Reset_ppu(1);
 	Reset_dma(1);
 	Reset_ctrl(1);
+	Reset_clock(1);
 	
 	Reset_cartridge(1);
 	Reset_mmu(1);
@@ -33,19 +34,48 @@ void emulator_start(const char * const fn) {
 	INFO("io:", " %p\n", memoryMap.io+IO);
 	INFO("hram:", " %p\nenter:", memoryMap.hram+HRAM);
 	//getchar();
-	INFO("Gobou Start !", "\n");
+	INFO("GameBreak Start !", "\n");
 	
 	//thrd_create(&emu_th, emulator_loop, NULL);
 }
-
+u16 SPX=0;
 int emulator_loop(void * uns) {
 	(void)uns;
 	u32 i = 0;
 	ControllerSync();
-	while(!isFrameReady()) {
-		//DEBUG("\t", "%u \t A %02X | BC %04X | DE %04X | HL %04X  [%c %c %c %c]  ( LY %hhu 0x%02X) <%02X %02X>\n", i++, A, BC, DE, HL,
-		//		  (z) ? 'Z': 'z', (n) ? 'N': 'n', (h) ? 'H': 'h', (c) ? 'C': 'c',
-		//	      ioLY, ioLY, ioIF, read_ie());
+	u8 m = 0, k = 0;
+	while(!isFrameReady() || !memoryMap.bootrom_unmapped ) {
+		//if (memoryMap.bootrom_unmapped && !k) {
+		//	k++;
+		//	for (u8 j = 0; j < 0x80; j++) INFO("IO", "FF%02X = %02X\n", j, direct_read_io(IO|j));
+		//	CRITICAL("", "A %02X | BC %04X | DE %04X | HL %04X | SP %04X | PC %04X [%c %c %c %c] %02X\n",
+		//	      A, BC, DE, HL, SP, PC,
+		//	      (z) ? 'Z' : 'z', (n) ? 'N' : 'n', (h) ? 'H' : 'h', (c) ? 'C' : 'c', read_ie());
+		//}
+		//if (PC > 0x4250 && PC < 0x4270) CRITICAL("PC4", "\n");
+		//if (PC > 0xC250 && PC < 0xC270) CRITICAL("PCC", "\n");
+		//if (OPCODE == 0xCD) m++;
+		//else if (m < 2) m = 0;
+		if (memoryMap.bootrom_unmapped) {
+			if (SPX != SP) {
+				//CRITICAL("SP", "%04X to %04X\n", SPX, SP);
+				SPX = SP;
+			}
+			//if (!k) {
+			//	ioLY = 144;
+			//	ppu_mem.dots = 456 - 191;
+			//	k=1;
+			//}
+			//LogInst();
+			//INFO("\t",
+			//      "%u \t A %02X | BC %04X | DE %04X | HL %04X | SP %04X | PC %04X [%c %c %c %c]  ( LY %hhu 0x%02X) <%02X %02X> (%02X %02X %02X %02X)\n",
+			//      i++, A, BC, DE, HL, SP, PC,
+			//      (z) ? 'Z' : 'z', (n) ? 'N' : 'n', (h) ? 'H' : 'h', (c) ? 'C' : 'c',
+			//      ioLY, ioLY, ioIF, read_ie(), ioDIV, ioTIMA, ioTMA, ioTAC);
+			//if (HL == 0xA100 || HL == 0xA101 || OPERAND == 0xA100 || OPERAND == 0xA101)
+			//	CRITICAL("BUG", "%04X %04X, (%04X %02X), %02X, %02X\n", HL, OPERAND, last_addr, last_value, direct_read(0xA100), direct_read(0xA101));
+			//if (!(i % 20)) CRITICAL("Wait...", "\n");
+		}
 		cpu_run();
 	}
 	ppu_mem.frame_ready = 0;
