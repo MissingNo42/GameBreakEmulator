@@ -77,7 +77,7 @@ void GfxRender_Memory() {
 	}
 	
 	for (; i < 0xc000; i++, px += 4) {
-		u8 cc = direct_read_xram(i);
+		u8 cc = memoryMap.xram[i];
 		px[2] = px[1] = cc;
 		px[0] = 0;
 	}
@@ -192,10 +192,11 @@ void GfxRender_VRAM() {
 	SDL_SetRenderDrawColor(renderer, 0x80, 0x80, 0, 0);
 	if (ioLCDC5) SDL_RenderDrawRect(renderer, &wd);
 	
-	SDL_SetRenderDrawColor(renderer, 0, 0x80, 0x80, 0);
 	if (ioLCDC1) for (u8 o = 0; o < 40; o++){
 		ObjAttribute oa = direct_read_oam_block(o);
 		SDL_Rect ob = {bg0.x + oa.X - 8, bg0.y + oa.Y - 16, 8, ioLCDC2 ? 16: 8};
+		if (oa.bg_priority) SDL_SetRenderDrawColor(renderer, 0, 0x80, 0x80, 0);
+		else SDL_SetRenderDrawColor(renderer, 0x80, 0, 0x80, 0);
 		SDL_RenderDrawRect(renderer, &ob);
 		
 		/*
