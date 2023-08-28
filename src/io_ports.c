@@ -8,6 +8,8 @@
 #include "units/cpu.h"
 #include "units/dma.h"
 #include "units/ppu.h"
+#include "timer.h"
+#include "units/ctrl.h"
 
 
 //////////////////////  Declarations  /////////////////////////
@@ -22,10 +24,8 @@ IO_PORTS ioPorts;
  * */
  
 void w00(u16 addr, u8 value) { // P1 - JOYP
-	btn_selector = value >> 4;
-	ioP1 = (value & 0x30) // readable?
-	    | (ActionBtn >> (value & 0x20))
-		| (DirectionBtn >> (value & 0x10));
+	ioP1 = (value & 0x30) | (ioP1 & 0xCF);
+	ControllerSync();
 }
 
 void w01(u16 addr, u8 value) {
@@ -39,19 +39,24 @@ void w02(u16 addr, u8 value) {
 #define w03 dummy_write
 
 void w04(u16 addr, u8 value) { // DIV
-	ioDIV = 0x00;
+	clock.wdiv = ioDIV = 0x00;
+	// TODO reset
 }
 
-void w05(u16 addr, u8 value) {
-	direct_raw_write_io(addr, value);
+void w05(u16 addr, u8 value) { // TIMA
+	if (!clock.reset_tima_done) {
+		ioTIMA = value;
+		clock.reset_tima_rq = 0;
+	}
 }
 
-void w06(u16 addr, u8 value) {
-	direct_raw_write_io(addr, value);
+void w06(u16 addr, u8 value) { // TMA
+	if (clock.reset_tima_done) ioTIMA = value;
+	ioTMA = value;
 }
 
-void w07(u16 addr, u8 value) {
-	direct_raw_write_io(addr, value);
+void w07(u16 addr, u8 value) { // TAC
+	ioTAC = value | 0xF8;
 }
 
 #define w08 dummy_write
@@ -63,7 +68,7 @@ void w07(u16 addr, u8 value) {
 #define w0E dummy_write
 
 void w0F(u16 addr, u8 value) { // IF
-	direct_raw_write_io(addr, value | 0xe0);
+	ioIF = value | 0xe0;
 }
 
 void w10(u16 addr, u8 value) {

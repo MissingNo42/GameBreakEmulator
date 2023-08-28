@@ -2,8 +2,8 @@
 // Created by Romain on 27/07/2023.
 //
 
-#ifndef GOBOUEMU_IO_PORTS_H
-#define GOBOUEMU_IO_PORTS_H
+#ifndef GBEMU_IO_PORTS_H
+#define GBEMU_IO_PORTS_H
 
 ////////////////////////  Includes  ///////////////////////////
 
@@ -243,11 +243,16 @@ extern IO_PORTS ioPorts;
 Reset(io_ports) {
 	for (u32 i = 0; i < sizeof(ioPorts); i++) ((u8*)&ioPorts)[i] = 0xFF;
 	
-	ioP1 = 0;
-	ioSB = ioSC = ioDIV = ioTIMA = ioTMA = ioTAC = 0;
-	ioIF = 0;
+	//ioP1 = 0xFF;
+	ioSB = ioDIV = ioTIMA = ioTMA = 0;
+	ioSC = 0x7E;
+	ioTAC = 0xF8;
+	ioIF = 0xE0;
+	
+	ioNR10 = 0x80;//TODO
+	
 	ioLCDC = 0x00;
-	ioSTAT = 2; // MODE 2
+	ioSTAT = 0x82; // MODE 2
 	ioSCX = ioSCY = ioWY = ioWX = 0;
 	ioLY = 0;
 	ioLYC = 0;
@@ -281,4 +286,4 @@ inline void write_io(u16 addr, u8 value) {
 	if (!memoryMap.dma_lock) direct_write_io(addr, value);
 }
 
-#endif //GOBOUEMU_IO_PORTS_H
+#endif //GBEMU_IO_PORTS_H
