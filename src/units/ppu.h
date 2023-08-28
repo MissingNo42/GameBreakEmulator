@@ -2,8 +2,8 @@
 // Created by Romain on 21/07/2023.
 //
 
-#ifndef GOBOUEMU_PPU_H
-#define GOBOUEMU_PPU_H
+#ifndef GBEMU_PPU_H
+#define GBEMU_PPU_H
 
 ////////////////////////  Includes  ///////////////////////////
 
@@ -89,7 +89,7 @@ extern Screen screen;
 
 void STAT_changed();
 
-void ppu_step(u8 cycles);
+void ppu_run(u8 cycles);
 void ppu_reset();
 inline void ppu_set_screen(Screen s) { screen = s; }
 
@@ -109,4 +109,4 @@ Load(ppu) {
 	load_obj(ppu_mem);
 }
 
-#endif //GOBOUEMU_PPU_H
+#endif //GBEMU_PPU_H

@@ -21,6 +21,7 @@ static inline void mode_3_start();
 #define set_mode_3() ioSTAT |= 0x03                  // From mode (2)
 
 #define check_lyc() ioSTAT = (ioSTAT & 0xFB) | ((ioLY == ioLYC) << 2)
+#define DOTS_SCANLINE 456
 
 const RGBPixel DMG_Color[] = {{.color = 0xFFFFFFFF}, {.color = 0xFFAAAAAA}, {.color = 0xFF555555}, {.color = 0xFF000000}};
 
@@ -41,7 +42,7 @@ void STAT_changed() {
 			((ioSTAT & 0x13) == 0x11) || // MODE 1
 			((ioSTAT & 0x0b) == 0x08))   // MODE 0
 		ppu_mem.stat_line |= 1;
-	if (ppu_mem.stat_line == 1) ioIF |= INT_LCD_STAT;
+	if (ppu_mem.stat_line == 1) add_interrupt(INT_LCD_STAT);
 	
 	//if (!GBC) {
 	//	ioSTAT = S; // Restore
@@ -95,8 +96,8 @@ static inline u8 mode_0_step(u8 cycles) {
 
 static inline void mode_1_start() {
 	set_mode_1();
-	ioIF |= INT_VBLANK; // Request VBLANK interrupt
-	ppu_mem.dots = 456;
+	add_interrupt(INT_VBLANK); // Request VBLANK interrupt
+	ppu_mem.dots = DOTS_SCANLINE;
 	ppu_mem.frame_ready = 1;
 	//TODO Frame ready
 }
@@ -110,7 +111,7 @@ static inline void mode_1_end() {
 		mode_2_start();
 	} else { // Mode 1 Continue
 		ioLY++;
-		ppu_mem.dots = 456;
+		ppu_mem.dots = DOTS_SCANLINE;
 	}
 	check_lyc();
 
@@ -376,7 +377,7 @@ void ppu_reset() {
 	STAT_changed(); // needed/required ??   may interrupt on invalid switch off (outside vblank)
 }
 
-void ppu_step(u8 cycles) { // mult of 2
+void ppu_run(u8 cycles) { // mult of 2
 	if (!ioLCDC7) return;
 	
 	ccc += cycles;
