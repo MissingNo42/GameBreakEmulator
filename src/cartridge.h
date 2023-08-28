@@ -2,8 +2,8 @@
 // Created by Romain on 19/07/2023.
 //
 
-#ifndef GOBOUEMU_CARTRIDGE_H
-#define GOBOUEMU_CARTRIDGE_H
+#ifndef GBEMU_CARTRIDGE_H
+#define GBEMU_CARTRIDGE_H
 
 ////////////////////////  Includes  ///////////////////////////
 
@@ -109,4 +109,4 @@ Load(cartridge) {
 	load_obj(cartridgeInfo);
 }
 
-#endif //GOBOUEMU_CARTRIDGE_H
+#endif //GBEMU_CARTRIDGE_H

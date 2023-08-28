@@ -79,7 +79,7 @@ u16 gchecksum(){
 
 void load_info(){
 	cartridgeInfo.type = CartridgeCapabilities[cartridgeHeader.type];
-	GBC = cartridgeHeader.gbc_flag >> 7;
+	GBC = 0;//cartridgeHeader.gbc_flag >> 7;
 	cartridgeInfo.rom_size = 0x8000 << cartridgeHeader.rom_size;
 	cartridgeInfo.rom_bank = 2 << cartridgeHeader.rom_size;
 	
