@@ -3,9 +3,12 @@
 //#include "src/core.h"
 
 #define FPS 120
-#define tr "../tloz.gb"
-//#define tr "../testrom/blargg/cpu_instrs/individual/03-op sp,hl.gb"
-//#define tr "../testrom/blargg/instr_timing/instr_timing.gb"
+#define tr "../pj.gb"
+//#define tr "../testrom/blargg/cpu_instrs/individual/02-interrupts.gb"
+
+//#define tr "../testrom/blargg/mem_timing/individual/01-read_timing.gb"
+//#define tr "../testrom/mooneye-test-suite/acceptance/intr_timing.gb"
+//#define tr "../testrom/mooneye-test-suite/acceptance/intr_timing.gb"
 
 /*
 static_assert(sizeof(Controller)    == 11,"invalid size");
@@ -23,7 +26,7 @@ static_assert(sizeof(Region)        == 2, "invalid size");*/
 //int SDL_main(int argc, char * argv[]);
 
 int main00() {
-	INFO("GobouEmulator starting", "cartridge file = %s\n", tr);
+	INFO("GameBreakEmulator starting", "cartridge file = %s\n", tr);
 	
 	open_cartridge(tr);
 	
@@ -77,7 +80,7 @@ int main00() {
 	INFO("rom:", " %p\nenter:", memoryMap.rom0+ROM0);
 	getchar();
 	
-	INFO("Gobou Start !", "\n");
+	INFO("GameBreak Start !", "\n");
 	//cpu_init();
 	//for (u32 i = 0; i < (4194304<<8); i++) {
 	u32 pass = 0;
@@ -108,7 +111,7 @@ int main00() {
 		//if (xx)DEBUG("\t", "%d \t A %02X (z %hhu) | C %02X | E %02X | HL %04X ( LY %hhu 0x%02X)\n", i, A, z, C, E, HL,ioLY, ioLY);
 		cpu_run();
 	}
-	INFO("Gobou Exit !", "\n");
+	INFO("GameBreak Exit !", "\n");
 	
 	free(Memory);
 	return 0;
@@ -131,7 +134,16 @@ int main(int argc, char * argv[]) {
 	
 	if (GfxSetup()) {
 		
-		emulator_start(tr);
+		SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
+		
+		//SDL_RenderSetLogicalSize
+		SDL_RenderSetScale(renderer, 2, 2);
+		
+		char romfilename[1024] = tr;
+		
+		EmuStart:
+		
+		emulator_start(romfilename);
 		
 		void * px;
 		int pitch;
@@ -152,6 +164,14 @@ int main(int argc, char * argv[]) {
 					case SDL_QUIT:
 						run = 0;
                         break;
+						
+					case (SDL_DROPFILE): {      // In case if dropped file
+	                    char * romfile = event.drop.file;
+						INFO("Restart", "with %s\n", romfile);
+						for (int i = 0; romfile[i]; i++) romfilename[i] = romfile[i];
+	                    SDL_free(romfile);
+	                    break;
+	               }
 						
 		            case SDL_KEYDOWN:{
 						switch (event.key.keysym.sym) {
