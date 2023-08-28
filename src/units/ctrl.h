@@ -2,8 +2,8 @@
 // Created by Romain on 21/08/2023.
 //
 
-#ifndef GOBOUEMU_CTRL_H
-#define GOBOUEMU_CTRL_H
+#ifndef GBEMU_CTRL_H
+#define GBEMU_CTRL_H
 
 
 #include "cpu.h"
@@ -102,4 +102,4 @@ Load(ctrl) {
 	ControllerSync();
 }
 
-#endif //GOBOUEMU_CTRL_H
+#endif //GBEMU_CTRL_H
