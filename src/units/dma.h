@@ -2,8 +2,8 @@
 // Created by Romain on 04/08/2023.
 //
 
-#ifndef GOBOUEMU_DMA_H
-#define GOBOUEMU_DMA_H
+#ifndef GBEMU_DMA_H
+#define GBEMU_DMA_H
 
 ////////////////////////  Includes  ///////////////////////////
 
@@ -64,4 +64,4 @@ void dma_run(u8 cycles);
 void hdma_start(u8 value);
 void hdma_run(u8 cycles);
 
-#endif //GOBOUEMU_DMA_H
+#endif //GBEMU_DMA_H

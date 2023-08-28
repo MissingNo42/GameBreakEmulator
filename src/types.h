@@ -2,8 +2,8 @@
 // Created by Romain on 18/07/2023.
 //
 
-#ifndef GOBOUEMU_TYPES_H
-#define GOBOUEMU_TYPES_H
+#ifndef GBEMU_TYPES_H
+#define GBEMU_TYPES_H
 
 #include <stdint.h>
 
@@ -47,4 +47,4 @@ typedef void writer(u16 addr, u8 value);
 #define Struct typedef struct
 #define Union typedef union
 
-#endif //GOBOUEMU_TYPES_H
+#endif //GBEMU_TYPES_H

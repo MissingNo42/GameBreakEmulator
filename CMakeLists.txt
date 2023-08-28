@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 3.26)
-project(GobouEmu C)
+project(GameBreakEmulator C)
 
 set(CMAKE_C_STANDARD 23)
-add_compile_options("-O2")
+set(CMAKE_VERBOSE_MAKEFILE TRUE)
+
+add_compile_options("-O1")
 #add_compile_options("-Os") #size
 #add_compile_options("-Ofast")
 #add_compile_options("-flto") # link opti
@@ -33,4 +35,19 @@ add_compile_options("-Wstack-usage=4194304") # debug
 #add_compile_options("--gc-sections")
 #add_compile_options("-print-gc-sections")
 
-add_executable(GobouEmu main.c src/units/mmu.c src/utils.c src/cartridge.c src/mapper.c src/mapper.h src/units/cpu.c src/units/cpu.h src/units/ppu.c src/units/ppu.h src/io_ports.c src/io_ports.h src/clock.c src/clock.h src/units/dma.c src/units/dma.h)
+add_executable(GameBreakEmulator main.c src/units/mmu.c src/utils.c src/cartridge.c src/mapper.c src/units/cpu.c src/units/ppu.c src/io_ports.c src/timer.c src/units/dma.c src/gfx/sdl.c
+        src/core.c
+        src/units/ctrl.c
+        src/units/apu.c
+        src/units/apu.h)
+
+
+INCLUDE(FindPkgConfig)
+
+pkg_check_modules(SDL2 REQUIRED sdl2)
+
+include_directories(${SDL2_INCLUDE_DIRS})
+
+link_directories (${SDL2_LIBRARY_DIRS})
+
+target_link_libraries (GameBreakEmulator ${SDL2_LIBRARIES})
