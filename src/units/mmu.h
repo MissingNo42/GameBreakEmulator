@@ -2,8 +2,8 @@
 // Created by Romain on 14/07/2023.
 //
 
-#ifndef GOBOUEMU_MMU_H
-#define GOBOUEMU_MMU_H
+#ifndef GBEMU_MMU_H
+#define GBEMU_MMU_H
 
 ////////////////////////  Includes  ///////////////////////////
 
@@ -49,6 +49,8 @@ Struct {
 
 extern u8 * Memory;
 extern MemoryMap memoryMap;
+extern u16 last_addr;
+extern u8 last_value;
 
 
 ////////////////////////   Macros   ///////////////////////////
@@ -103,7 +105,7 @@ extern MemoryMap memoryMap;
 #define mmu_IR(R, cond) inline u8 read_##R(u16 addr) { return (cond) ? 0xFF : direct_read_##R(addr); }
 
 #define mmu_DW(R) inline void direct_write_##R(u16 addr, u8 value) { memoryMap.R[addr] = value; }
-#define mmu_IW(R, cond) inline void write_##R(u16 addr, u8 value) { if (!(cond)) direct_write_##R(addr, value); }
+#define mmu_IW(R, cond) inline void write_##R(u16 addr, u8 value) { if (cond) ERROR("Write to locked "#R, "at $%04X = %02X\n", addr, value); else direct_write_##R(addr, value); }
 
 
 #define mmu_D(R) mmu_DR(R) mmu_DW(R)
@@ -119,8 +121,8 @@ inline void direct_write_ie(u8 value) { memoryMap.hram[0xFFFF] = (value & 0x1f);
 #define read_ie() direct_read_ie()
 #define write_ie(value) direct_write_ie(value)
 
-#define add_interrupt(int) write_ie(read_ie() | (int))
-#define rmv_interrupt(int) write_ie(read_ie() & ~(int))
+#define add_interrupt(intr) ioIF |= (intr)
+#define rmv_interrupt(intr) ioIF &= ~(intr)
 
 mmu_RWX(rom0, mapper.io.write_rom0(addr, value), memoryMap.mem_lock)
 mmu_RWX(rom1, mapper.io.write_rom1(addr, value), memoryMap.mem_lock)
@@ -199,4 +201,4 @@ Load(mmu) {
 	map_memory();
 }
 
-#endif //GOBOUEMU_MMU_H
+#endif //GBEMU_MMU_H
