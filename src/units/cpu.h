@@ -2,8 +2,8 @@
 // Created by Romain on 21/07/2023.
 //
 
-#ifndef GOBOUEMU_CPU_H
-#define GOBOUEMU_CPU_H
+#ifndef GBEMU_CPU_H
+#define GBEMU_CPU_H
 
 ////////////////////////  Includes  ///////////////////////////
 
@@ -43,12 +43,7 @@ Struct {
 		struct { u8 rO1, rO2; };
 	};
 	u8 rOPCODE;
-	u8 rIME: 1, rIME_DELAY: 2, rhalted: 1, rhalt_bug: 1, rbtn_selector: 2, rdouble_speed: 1;
-	
-	union {
-		struct { u8 rActionBtn: 4, rDirectionBtn: 4; }; // used to keep all btn, then dispatched to JOYP
-		u8 rpcbBtn;
-	};
+	u8 rIME: 1, rIME_DELAY: 2, rhalted: 1, rhalt_bug: 1, rdouble_speed: 1;
 } CPURegisters;
 #else
 Struct {
@@ -80,12 +75,8 @@ Struct {
 		struct { u8 rO2, rO1; };
 	};
 	u8 rOPCODE;
-	u8 rIME: 1, rIME_DELAY: 2, rhalted: 1, rhalt_bug: 1;
+	u8 rIME: 1, rIME_DELAY: 2, rhalted: 1, rhalt_bug: 1, rdouble_speed: 1;
 	
-	union {
-		struct { u8 rDirectionBtn: 4, rActionBtn: 4; }; // used to keep all btn, then dispatched to JOYP
-		u8 rpcbBtn;
-	};
 } CPURegisters;
 #endif
 
@@ -125,18 +116,13 @@ extern u16 PCX; // debug opc's PC
 #define IME_DELAY Registers.rIME_DELAY
 #define halted Registers.rhalted
 #define halt_bug Registers.rhalt_bug
-#define ActionBtn Registers.rActionBtn
-#define DirectionBtn Registers.rDirectionBtn
-#define btn_selector Registers.rbtn_selector
 #define double_speed Registers.rdouble_speed
-#define pcbBtn Registers.rpcbBtn
 
 
 /////////////////////  Registrations  /////////////////////////
 
 Reset(cpu){
 	for (u16 i = 0; i < (u16)sizeof(Registers); i++) ((u8*)&Registers)[i] = 0x00;
-	pcbBtn = 0xFF;
 }
 
 SaveSize(cpu, sizeof (Registers))
@@ -155,4 +141,4 @@ Load(cpu) {
 void cpu_init();
 void cpu_run();
 
-#endif //GOBOUEMU_CPU_H
+#endif //GBEMU_CPU_H

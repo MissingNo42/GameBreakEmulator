@@ -8,6 +8,7 @@
 #include "ppu.h"
 #include "mmu.h"
 #include "dma.h"
+#include "../timer.h"
 
 
 //////////////////////  Declarations  /////////////////////////
@@ -32,10 +33,12 @@ static inline void hdma_sync() {
 	do {
 		u8 cycles = 4; // 4 because most requires at least 2 (4 >> 1 == 2)
 		dma_sync(cycles);
+		
+		clock_run(cycles);
 		if (double_speed) cycles >>= 1;
 		hdma_run(cycles);
 		
-		ppu_step(cycles);
+		ppu_run(cycles);
 		//TODO run every units here
 		
 	} while (hdma.general);
@@ -44,11 +47,15 @@ static inline void hdma_sync() {
 static inline void sync(u8 cycles) {
 	if (hdma.general) hdma_sync();
 	else {
+		//if (memoryMap.bootrom_unmapped && ioTAC == 5)
+		//	INFO("TM", "%02X %02X %02X %02X\n", ioDIV, ioTIMA, ioTMA, ioTAC);
+		clock_run(cycles);
 		dma_sync(cycles);
+		
 		if (double_speed) cycles >>= 1;
 		
 		//TODO run every units here
-		ppu_step(cycles);
+		ppu_run(cycles);
 	}
 }
 
@@ -3012,7 +3019,7 @@ const char * const OPName[] = {
 void cpu_init() {
 	A = GBC ? 0x11: 0x01;
 	F = 0xB0, BC = 0x13, DE = 0xD8, HL = 0x014D, SP = 0xFFFE, PC = 0x100;
-	IME = halted = halt_bug = DirectionBtn = ActionBtn = IME_DELAY = double_speed = btn_selector = 0;
+	IME = halted = halt_bug = IME_DELAY = double_speed = 0;
 }
 
 void cpu_run() { // run 1 loop (>= 1 M-cycle)
@@ -3026,7 +3033,6 @@ void cpu_run() { // run 1 loop (>= 1 M-cycle)
 			PC++;
 		}
 		if (IME) {
-			// TODO: delay 2 M-cycles
 			sync(8);
 			IME = 0;
 			
