@@ -18,12 +18,17 @@ void init_mbc0(){
 }
 
 u8 read_ram_mbc0(u16 addr){
-	return memoryMap.xram_enable ? memoryMap.xram[addr]: 0xff;
+	if (memoryMap.xram_enable) return memoryMap.xram[addr];
+	else {
+		CRITICAL("Read to locked XRAM", "at $%04X = %02X\n", addr, memoryMap.xram[addr]);
+		return 0xff;
+	}
 }
 
 
 void write_ram_mbc0(u16 addr, u8 value){
 	if (memoryMap.xram_enable) memoryMap.xram[addr] = value;
+	else CRITICAL("Write to locked XRAM", "at $%04X = %02X (new = %02X)\n", addr, memoryMap.xram[addr], value);
 }
 
 
@@ -67,7 +72,11 @@ void write_rom0_mbc1(u16 addr, u8 value){
 		mapper.data.mbc1.rom_bank = value;
 		update_mbc1_bank();
 		
-	} else if (cartridgeInfo.type.has_ram) memoryMap.xram_enable = (value & 0xA) == 0xA; // 0x000-0x1fff
+	} else {
+		if (cartridgeInfo.type.has_ram) {
+			memoryMap.xram_enable = (value & 0xF) == 0xA; // 0x000-0x1fff
+		}
+	}
 }
 
 
@@ -77,6 +86,42 @@ void write_rom1_mbc1(u16 addr, u8 value){
 	update_mbc1_bank();
 }
 
+
+/// MBC5
+
+
+void init_mbc5(){
+	//CRITICAL("MBC5 Init", "\n");
+	memoryMap.xram_enable = 0;
+	mapper.data.mbc5.raw = 0;
+	mapper.data.mbc5.mapped_ram = cartridgeInfo.ram_bank > 1;
+}
+
+
+#define read_ram_mbc5 read_ram_mbc1
+#define write_ram_mbc5 write_ram_mbc1
+
+
+void write_rom0_mbc5(u16 addr, u8 value){
+	//CRITICAL("MBC5 rom0", "%04X = %02X\n", addr, value);
+	if (addr & 0x2000) { // 0x2000-0x3fff
+		if (addr & 0x1000) mapper.data.mbc5.hrom_bank = value & 1;
+		else mapper.data.mbc5.lrom_bank = value;
+		set_rom1(mapper.data.mbc5.rom_bank);
+	} else if (cartridgeInfo.type.has_ram) memoryMap.xram_enable = (value & 0xF) == 0xA; // 0x000-0x1fff
+}
+
+
+void write_rom1_mbc5(u16 addr, u8 value){
+	//CRITICAL("MBC5 rom0", "%04X = %02X\n", addr, value);
+	if (addr & 0x2000); // 0x6000-0x7fff
+	else if (cartridgeInfo.type.has_rumble) { // 0x4000-0x5fff
+		mapper.data.mbc5.rumble = value >> 3;
+		mapper.data.mbc5.ram_bank = value & 0x7;
+	}
+	else mapper.data.mbc5.ram_bank = value;
+	if (mapper.data.mbc5.mapped_ram) set_xram(mapper.data.mbc5.ram_bank);
+}
 
 /// Global mapper
 
@@ -102,5 +147,10 @@ void init_mapper(){
 
 Mapper mapper;
 const MapperIO supported_mapper[] = {{read_ram_mbc0, write_ram_mbc0, dummy_write, dummy_write, init_mbc0},
-							         {read_ram_mbc1, write_ram_mbc1, write_rom0_mbc1, write_rom1_mbc1, init_mbc1}};
+							         {read_ram_mbc1, write_ram_mbc1, write_rom0_mbc1, write_rom1_mbc1, init_mbc1},
+									 {read_ram_mbc0, write_ram_mbc0, dummy_write, dummy_write, init_mbc0},
+									 {read_ram_mbc0, write_ram_mbc0, dummy_write, dummy_write, init_mbc0},
+									 {read_ram_mbc0, write_ram_mbc0, dummy_write, dummy_write, init_mbc0},
+									 {read_ram_mbc5, write_ram_mbc5, write_rom0_mbc5, write_rom1_mbc5, init_mbc5},
+};
 

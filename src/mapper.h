@@ -2,8 +2,8 @@
 // Created by Romain on 20/07/2023.
 //
 
-#ifndef GOBOUEMU_MAPPER_H
-#define GOBOUEMU_MAPPER_H
+#ifndef GBEMU_MAPPER_H
+#define GBEMU_MAPPER_H
 
 ////////////////////////  Includes  ///////////////////////////
 
@@ -30,6 +30,22 @@ Struct {
 	u8 mapped_ram: 1;
 } MBC1;
 
+Union {
+	struct {
+		u16 lrom_bank: 8;
+		u16 hrom_bank: 1;
+		u16 ram_bank: 4;
+		u16 rumble: 1;
+		u16 mapped_ram: 1;
+		u16 _0: 1;
+	};
+	struct {
+		u16 rom_bank: 9;
+		u16 _1: 7;
+	};
+	u16 raw;
+} MBC5;
+
 Struct {
 	reader * read_ram;   // MBC3/5...
 	writer * write_ram;
@@ -40,6 +56,7 @@ Struct {
 
 Union {
 	MBC1 mbc1;
+	MBC5 mbc5;
 } MapperData;
 
 Struct {
@@ -51,7 +68,7 @@ Struct {
 //////////////////////  Declarations  /////////////////////////
 
 extern Mapper mapper;
-extern const MapperIO supported_mapper[2]; // TODO improve (union: switched Reset)
+extern const MapperIO supported_mapper[6]; // TODO improve (union: switched Reset)
 
 
 ////////////////////////   Methods   //////////////////////////
@@ -79,4 +96,4 @@ Load(mapper) {
 }
 
 
-#endif //GOBOUEMU_MAPPER_H
+#endif //GBEMU_MAPPER_H
