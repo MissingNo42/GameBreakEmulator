@@ -63,16 +63,16 @@ SWAP B	SWAP C	SWAP D	SWAP E	SWAP H	SWAP L	SWAP (HL)	SWAP A	SRL B	SRL C	SRL D	SRL
 2  8	2  8	2  8	2  8	2  8	2  8	2  16	2  8	2  8	2  8	2  8	2  8	2  8	2  8	2  16	2  8
 Z 0 0 0	Z 0 0 0	Z 0 0 0	Z 0 0 0	Z 0 0 0	Z 0 0 0	Z 0 0 0	Z 0 0 0	Z 0 0 C	Z 0 0 C	Z 0 0 C	Z 0 0 C	Z 0 0 C	Z 0 0 C	Z 0 0 C	Z 0 0 C
 BIT 0,B	BIT 0,C	BIT 0,D	BIT 0,E	BIT 0,H	BIT 0,L	BIT 0,(HL)	BIT 0,A	BIT 1,B	BIT 1,C	BIT 1,D	BIT 1,E	BIT 1,H	BIT 1,L	BIT 1,(HL)	BIT 1,A
-2  8	2  8	2  8	2  8	2  8	2  8	2  16	2  8	2  8	2  8	2  8	2  8	2  8	2  8	2  16	2  8
+2  8	2  8	2  8	2  8	2  8	2  8	2  12	2  8	2  8	2  8	2  8	2  8	2  8	2  8	2  12	2  8
 Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -
 BIT 2,B	BIT 2,C	BIT 2,D	BIT 2,E	BIT 2,H	BIT 2,L	BIT 2,(HL)	BIT 2,A	BIT 3,B	BIT 3,C	BIT 3,D	BIT 3,E	BIT 3,H	BIT 3,L	BIT 3,(HL)	BIT 3,A
-2  8	2  8	2  8	2  8	2  8	2  8	2  16	2  8	2  8	2  8	2  8	2  8	2  8	2  8	2  16	2  8
+2  8	2  8	2  8	2  8	2  8	2  8	2  12	2  8	2  8	2  8	2  8	2  8	2  8	2  8	2  12	2  8
 Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -
 BIT 4,B	BIT 4,C	BIT 4,D	BIT 4,E	BIT 4,H	BIT 4,L	BIT 4,(HL)	BIT 4,A	BIT 5,B	BIT 5,C	BIT 5,D	BIT 5,E	BIT 5,H	BIT 5,L	BIT 5,(HL)	BIT 5,A
-2  8	2  8	2  8	2  8	2  8	2  8	2  16	2  8	2  8	2  8	2  8	2  8	2  8	2  8	2  16	2  8
+2  8	2  8	2  8	2  8	2  8	2  8	2  12	2  8	2  8	2  8	2  8	2  8	2  8	2  8	2  12	2  8
 Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -
 BIT 6,B	BIT 6,C	BIT 6,D	BIT 6,E	BIT 6,H	BIT 6,L	BIT 6,(HL)	BIT 6,A	BIT 7,B	BIT 7,C	BIT 7,D	BIT 7,E	BIT 7,H	BIT 7,L	BIT 7,(HL)	BIT 7,A
-2  8	2  8	2  8	2  8	2  8	2  8	2  16	2  8	2  8	2  8	2  8	2  8	2  8	2  8	2  16	2  8
+2  8	2  8	2  8	2  8	2  8	2  8	2  12	2  8	2  8	2  8	2  8	2  8	2  8	2  8	2  12	2  8
 Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -	Z 0 1 -
 RES 0,B	RES 0,C	RES 0,D	RES 0,E	RES 0,H	RES 0,L	RES 0,(HL)	RES 0,A	RES 1,B	RES 1,C	RES 1,D	RES 1,E	RES 1,H	RES 1,L	RES 1,(HL)	RES 1,A
 2  8	2  8	2  8	2  8	2  8	2  8	2  16	2  8	2  8	2  8	2  8	2  8	2  8	2  8	2  16	2  8
@@ -104,6 +104,7 @@ n1 = [i.split('\t') for i in r1.splitlines()[1:]]
 n2 = [i.split('\t') for i in r2.splitlines()[1:]]
 c = []
 
+
 def parse_opcode(n, opc):
     k = (opc >> 4) * 3
     nm = n[k][opc & 0xf]
@@ -113,45 +114,49 @@ def parse_opcode(n, opc):
     f = n[k + 2][opc & 0xf].split(' ')
     return nm, sz, c, f
 
+
 class i:
     def __init__(s, n, opc):
         s.n, s.sz, s.c, s.f = parse_opcode(n, opc)
         s.opc = opc
         s.H = n is n2
-        s.cd=""
-        
+        s.cd = ""
+
     def __repr__(s):
         return f"<{s.opc:02X} = {s.n}\t | Fg: {' '.join(s.f)} | Sz: {s.sz} | Cc: {s.c}>"
-    
+
     def x(s):
         if s.cd: return s.cd
         if s.n.startswith('UNKN'):
             return f"#define i{s.opc:02X} UnknownOpcode"
-        
-        h=f"\n{'INST_H' if s.H else 'INST'}({s.opc:02X}, {s.n.replace(' ', '_').replace('+', '_').replace(',', '_').upper()})"
-        h+=f' {{\n'
-        
+
+        h = f"\n{'INST_H' if s.H else 'INST'}({s.opc:02X}, {s.n.replace(' ', '_').replace('+', '_').replace(',', '_').upper()})"
+        h += f' {{\n'
+
         if s.n.startswith('LD'):
-            a,b=s.n.split(" ",1)[-1].replace('a16', 'OPERAND').replace('d16', 'OPERAND').replace('d8', 'O1').replace('a8', 'O1').replace('+', '++').replace('-', '--').split(',')
+            a, b = s.n.split(" ", 1)[-1].replace('a16', 'OPERAND').replace('d16', 'OPERAND').replace('d8',
+                                                                                                     'O1').replace('a8',
+                                                                                                                   'O1').replace(
+                '+', '++').replace('-', '--').split(',')
             if '(' in a:
                 a = a[1:-1]
-                if a in ['O1', 'O2'] or len(a) == 1: a = "0xFF00 | " + a 
+                if a in ['O1', 'O2'] or len(a) == 1: a = "0xFF00 | " + a
                 h += f"\tcpu_write({a}, {b});\n"
                 if b in ("SP",):
                     h += f"\tcpu_write({a} + 1, {b} >> 8);\n"
             elif '(' in b:
                 b = b[1:-1]
-                if b  in ['O1', 'O2'] or len(b) == 1: b = "0xFF00 | " + b 
+                if b in ['O1', 'O2'] or len(b) == 1: b = "0xFF00 | " + b
                 h += f"\t{a} = cpu_read({b});\n"
             elif "r8" in b:
-                h+=f"\tADD_SP_d(O1, {a});\n"
+                h += f"\tADD_SP_d(O1, {a});\n"
             else:
-                h+=f"\t{a} = {b};\n"
+                h += f"\t{a} = {b};\n"
                 if b == "HL":
-                    h+=f"\tsync(4);\n"
-            
+                    h += f"\tsync(4);\n"
+
         elif s.n.startswith('INC'):
-            a=s.n.split(" ",1)[-1]
+            a = s.n.split(" ", 1)[-1]
             if '(' in a:
                 a = a[1:-1]
                 h += f"\tu8 r = cpu_read({a});\n"
@@ -162,9 +167,9 @@ class i:
                 h += f"\tsync(4);\n"
             else:
                 h += f"\tINC({a});\n"
-            
+
         elif s.n.startswith('DEC'):
-            a=s.n.split(" ",1)[-1]
+            a = s.n.split(" ", 1)[-1]
             if '(' in a:
                 a = a[1:-1]
                 h += f"\tu8 r = cpu_read({a});\n"
@@ -175,150 +180,148 @@ class i:
                 h += f"\tsync(4);\n"
             else:
                 h += f"\tDEC({a});\n"
-            
+
         elif s.n.startswith('AND'):
-            a=s.n.split(" ",1)[-1].replace('d8', 'O1')
+            a = s.n.split(" ", 1)[-1].replace('d8', 'O1')
             if '(' in a:
                 a = a[1:-1]
                 h += f"\tAND(cpu_read({a}));\n"
             else:
                 h += f"\tAND({a});\n"
-            
+
         elif s.n.startswith('OR'):
-            a=s.n.split(" ",1)[-1].replace('d8', 'O1')
+            a = s.n.split(" ", 1)[-1].replace('d8', 'O1')
             if '(' in a:
                 a = a[1:-1]
                 h += f"\tOR(cpu_read({a}));\n"
             else:
                 h += f"\tOR({a});\n"
-            
+
         elif s.n.startswith('XOR'):
-            a=s.n.split(" ",1)[-1].replace('d8', 'O1')
+            a = s.n.split(" ", 1)[-1].replace('d8', 'O1')
             if '(' in a:
                 a = a[1:-1]
                 h += f"\tXOR(cpu_read({a}));\n"
             else:
                 h += f"\tXOR({a});\n"
-            
+
         elif s.n.startswith('CP '):
-            a=s.n.split(" ",1)[-1].replace('d8', 'O1')
+            a = s.n.split(" ", 1)[-1].replace('d8', 'O1')
             if '(' in a:
                 a = a[1:-1]
                 h += f"\tu8 r = cpu_read({a});\n"
                 h += f"\tCP(r);\n"
             else:
                 h += f"\tCP({a});\n"
-            
+
         elif s.n.startswith('ADD A'):
-            a=s.n.split(" ",1)[-1].split(",",1)[-1].replace('d8', 'O1')
+            a = s.n.split(" ", 1)[-1].split(",", 1)[-1].replace('d8', 'O1')
             if '(' in a:
                 a = a[1:-1]
                 h += f"\tu8 r = cpu_read({a});\n"
                 h += f"\tADD(r);\n"
             else:
                 h += f"\tADD({a});\n"
-            
+
         elif s.n.startswith('ADC'):
-            a=s.n.split(" ",1)[-1].split(",",1)[-1].replace('d8', 'O1')
+            a = s.n.split(" ", 1)[-1].split(",", 1)[-1].replace('d8', 'O1')
             if '(' in a:
                 a = a[1:-1]
                 h += f"\tu8 r = cpu_read({a});\n"
                 h += f"\tADC(r);\n"
             else:
                 h += f"\tADC({a});\n"
-            
+
         elif s.n.startswith('SUB'):
-            a=s.n.split(" ",1)[-1].split(",",1)[-1].replace('d8', 'O1')
+            a = s.n.split(" ", 1)[-1].split(",", 1)[-1].replace('d8', 'O1')
             if '(' in a:
                 a = a[1:-1]
                 h += f"\tu8 r = cpu_read({a});\n"
                 h += f"\tSUB(r);\n"
             else:
                 h += f"\tSUB({a});\n"
-            
+
         elif s.n.startswith('SBC'):
-            a=s.n.split(" ",1)[-1].split(",",1)[-1].replace('d8', 'O1')
+            a = s.n.split(" ", 1)[-1].split(",", 1)[-1].replace('d8', 'O1')
             if '(' in a:
                 a = a[1:-1]
                 h += f"\tu8 r = cpu_read({a});\n"
                 h += f"\tSBC(r);\n"
             else:
                 h += f"\tSBC({a});\n"
-            
+
         elif s.n.startswith('ADD SP'):
-            a=s.n.split(" ",1)[-1].split(",",1)[-1].replace('r8', 'O1')
+            a = s.n.split(" ", 1)[-1].split(",", 1)[-1].replace('r8', 'O1')
             if '(' in a:
                 a = a[1:-1]
                 h += f"\tu8 r = cpu_read({a});\n"
                 h += f"\tADD_SP(r);\n"
             else:
                 h += f"\tADD_SP({a});\n"
-            
+
         elif s.n.startswith('ADD HL'):
-            a=s.n.split(" ",1)[-1].split(",",1)[-1].replace('r8', 'O1')
+            a = s.n.split(" ", 1)[-1].split(",", 1)[-1].replace('r8', 'O1')
             if '(' in a:
                 a = a[1:-1]
                 h += f"\tu8 r = cpu_read({a});\n"
                 h += f"\tADD_HL(r);\n"
             else:
                 h += f"\tADD_HL({a});\n"
-            
+
         elif s.n.startswith('RST'):
-            a=s.n.split(" ",1)[-1].replace('H', '')
+            a = s.n.split(" ", 1)[-1].replace('H', '')
             h += f"\tPUSH16(PC);\n"
             h += f"\tPC = 0x{a};\n"
             h += f"\tsync(4);\n"
-            
+
         elif s.n.startswith('POP'):
-            a=s.n.split(" ",1)[-1]
+            a = s.n.split(" ", 1)[-1]
             h += f"\t{a} = POP16();\n"
             if a == 'AF':
                 h += f"\tFx = 0;\n"
-            
+
         elif s.n.startswith('PUSH'):
-            a=s.n.split(" ",1)[-1]
+            a = s.n.split(" ", 1)[-1]
             h += f"\tPUSH16({a});\n"
             h += f"\tsync(4);\n"
-            
+
         elif s.n.startswith('POP'):
-            a=s.n.split(" ",1)[-1]
+            a = s.n.split(" ", 1)[-1]
             h += f"\t{a} = POP16();\n"
             if a == 'AF':
                 h += f"\tFx = 0;\n"
-            
+
         elif s.n.startswith('RET'):
-            a=s.n.split(" ",1)[-1]
+            a = s.n.split(" ", 1)[-1]
             match len(a):
                 case 1:
                     h += f"\tsync(4);\n"
                     h += f"\tif ({a.lower()}) {{\n"
                     h += f"\t\tPC = POP16();\n"
                     h += f"\t\tsync(4);\n"
-                    h += f"\t\t return 20;\n"
                     h += f"\t}}\n"
                 case 2:
                     h += f"\tsync(4);\n"
                     h += f"\tif ({a.lower().replace('n', '!')}) {{\n"
                     h += f"\t\tPC = POP16();\n"
                     h += f"\t\tsync(4);\n"
-                    h += f"\t\t return 20;\n"
                     h += f"\t}}\n"
-                case 4: #RETI
+                case 4:  # RETI
                     h += f"\tPC = POP16();\n"
                     h += f"\tsync(4);\n"
                     h += f"\tIME = 1;\n"
                 case x:
                     h += f"\tPC = POP16();\n"
                     h += f"\tsync(4);\n"
-            
+
         elif s.n.startswith('EI'):
             h += f"\tIME_DELAY |= 2;\n"
-            
+
         elif s.n.startswith('DI'):
             h += f"\tIME = 0;\n"
-            
+
         elif s.n.startswith('JP'):
-            a=s.n.split(" ",1)[-1].replace("a16", "OPERAND").replace("(HL)", "HL").split(",",1)
+            a = s.n.split(" ", 1)[-1].replace("a16", "OPERAND").replace("(HL)", "HL").split(",", 1)
             match len(a):
                 case 1:
                     h += f"\tPC = {a[0]};\n"
@@ -327,11 +330,10 @@ class i:
                     h += f"\tif ({a[0].lower().replace('n', '!')}) {{\n"
                     h += f"\t\tPC = {a[1]};\n"
                     h += f"\t\tsync(4);\n"
-                    h += f"\t\t return 16;\n"
                     h += f"\t}}\n"
-            
+
         elif s.n.startswith('JR'):
-            a=s.n.split(" ",1)[-1].replace("r8", "O1").split(",",1)
+            a = s.n.split(" ", 1)[-1].replace("r8", "O1").split(",", 1)
             match len(a):
                 case 1:
                     h += f"\tPC += (s8){a[0]};\n"
@@ -340,11 +342,10 @@ class i:
                     h += f"\tif ({a[0].lower().replace('n', '!')}) {{\n"
                     h += f"\t\tPC += (s8){a[1]};\n"
                     h += f"\t\tsync(4);\n"
-                    h += f"\t\treturn 12;\n"
                     h += f"\t}}\n"
-            
+
         elif s.n.startswith('CALL'):
-            a=s.n.split(" ",1)[-1].replace("a16", "OPERAND").replace("(HL)", "HL").split(",",1)
+            a = s.n.split(" ", 1)[-1].replace("a16", "OPERAND").replace("(HL)", "HL").split(",", 1)
             match len(a):
                 case 1:
                     h += f"\tPUSH16(PC);\n"
@@ -354,14 +355,13 @@ class i:
                     h += f"\tif ({a[0].lower().replace('n', '!')}) {{\n"
                     h += f"\t\tPUSH16(PC);\n"
                     h += f"\t\tPC = {a[1]};\n"
-                    h += f"\tsync(4);\n"
-                    h += f"\t\treturn 24;\n"
+                    h += f"\t\tsync(4);\n"
                     h += f"\t}}\n"
 
-        
+
         elif s.n.startswith('NOP'):
             pass
-        
+
         elif s.n.startswith('DAA'):
             h += f"\ts32 daa = A;\n"
             h += f"\tif (n) {{\n"
@@ -373,25 +373,25 @@ class i:
             h += f"\t}}\n\n"
             h += f"\tA = daa, h = 0, z = !A;\n"
             h += f"\tif ((daa & 0x100) == 0x100) c = 1;\n"
-        
+
         elif s.n.startswith('RLCA'):
             h += f"\tRLCA();\n"
-        
+
         elif s.n.startswith('RLA'):
             h += f"\tRLA();\n"
-        
+
         elif s.n.startswith('RRCA'):
             h += f"\tRRCA();\n"
-        
+
         elif s.n.startswith('RRA'):
             h += f"\tRRA();\n"
-        
+
         elif s.n.startswith('SCF'):
             h += f"\tSCF();\n"
-        
+
         elif s.n.startswith('CCF'):
             h += f"\tCCF();\n"
-        
+
         elif s.n.startswith('CPL'):
             h += f"\tCPL();\n"
 
@@ -445,9 +445,9 @@ class i:
 
         ## H-opcode
         elif s.n.startswith('PREFIX'):
-            h += f"\treturn HighInstructions[O1]();\n"
+            h += f"\tHighInstructions[O1]();\n"
             h += f'}} // {repr(s)[1:-1]}'
-            s.cd=h
+            s.cd = h
             return h
 
         elif s.n.startswith('RLC'):
@@ -456,7 +456,8 @@ class i:
                 h += f"\tu8 r = cpu_read(HL);\n"
                 h += f"\tRLC(r);\n"
                 h += f"\tcpu_write(HL, r);\n"
-            else: h += f"\tRLC({a});\n"
+            else:
+                h += f"\tRLC({a});\n"
 
         elif s.n.startswith('RRC'):
             a = s.n.split(' ')[-1]
@@ -464,7 +465,8 @@ class i:
                 h += f"\tu8 r = cpu_read(HL);\n"
                 h += f"\tRRC(r);\n"
                 h += f"\tcpu_write(HL, r);\n"
-            else: h += f"\tRRC({a});\n"
+            else:
+                h += f"\tRRC({a});\n"
 
         elif s.n.startswith('RL '):
             a = s.n.split(' ')[-1]
@@ -472,7 +474,8 @@ class i:
                 h += f"\tu8 r = cpu_read(HL);\n"
                 h += f"\tRL(r);\n"
                 h += f"\tcpu_write(HL, r);\n"
-            else: h += f"\tRL({a});\n"
+            else:
+                h += f"\tRL({a});\n"
 
         elif s.n.startswith('RR '):
             a = s.n.split(' ')[-1]
@@ -480,7 +483,8 @@ class i:
                 h += f"\tu8 r = cpu_read(HL);\n"
                 h += f"\tRR(r);\n"
                 h += f"\tcpu_write(HL, r);\n"
-            else: h += f"\tRR({a});\n"
+            else:
+                h += f"\tRR({a});\n"
 
         elif s.n.startswith('SLA'):
             a = s.n.split(' ')[-1]
@@ -488,7 +492,8 @@ class i:
                 h += f"\tu8 r = cpu_read(HL);\n"
                 h += f"\tSLA(r);\n"
                 h += f"\tcpu_write(HL, r);\n"
-            else: h += f"\tSLA({a});\n"
+            else:
+                h += f"\tSLA({a});\n"
 
         elif s.n.startswith('SRA'):
             a = s.n.split(' ')[-1]
@@ -496,7 +501,8 @@ class i:
                 h += f"\tu8 r = cpu_read(HL);\n"
                 h += f"\tSRA(r);\n"
                 h += f"\tcpu_write(HL, r);\n"
-            else: h += f"\tSRA({a});\n"
+            else:
+                h += f"\tSRA({a});\n"
 
         elif s.n.startswith('SWAP'):
             a = s.n.split(' ')[-1]
@@ -504,7 +510,8 @@ class i:
                 h += f"\tu8 r = cpu_read(HL);\n"
                 h += f"\tSWAP(r);\n"
                 h += f"\tcpu_write(HL, r);\n"
-            else: h += f"\tSWAP({a});\n"
+            else:
+                h += f"\tSWAP({a});\n"
 
         elif s.n.startswith('SRL'):
             a = s.n.split(' ')[-1]
@@ -512,15 +519,16 @@ class i:
                 h += f"\tu8 r = cpu_read(HL);\n"
                 h += f"\tSRL(r);\n"
                 h += f"\tcpu_write(HL, r);\n"
-            else: h += f"\tSRL({a});\n"
+            else:
+                h += f"\tSRL({a});\n"
 
         elif s.n.startswith('BIT'):
             b, a = s.n.split(' ')[-1].split(',')
             if '(' in a:
                 h += f"\tu8 r = cpu_read(HL);\n"
                 h += f"\tBIT({b}, r);\n"
-                h += f"\tcpu_write(HL, r);\n"
-            else: h += f"\tBIT({b}, {a});\n"
+            else:
+                h += f"\tBIT({b}, {a});\n"
 
         elif s.n.startswith('RES'):
             b, a = s.n.split(' ')[-1].split(',')
@@ -528,7 +536,8 @@ class i:
                 h += f"\tu8 r = cpu_read(HL);\n"
                 h += f"\tRES({b}, r);\n"
                 h += f"\tcpu_write(HL, r);\n"
-            else: h += f"\tRES({b}, {a});\n"
+            else:
+                h += f"\tRES({b}, {a});\n"
 
         elif s.n.startswith('SET'):
             b, a = s.n.split(' ')[-1].split(',')
@@ -536,45 +545,46 @@ class i:
                 h += f"\tu8 r = cpu_read(HL);\n"
                 h += f"\tSET({b}, r);\n"
                 h += f"\tcpu_write(HL, r);\n"
-            else: h += f"\tSET({b}, {a});\n"
+            else:
+                h += f"\tSET({b}, {a});\n"
 
         ## Undef
-        
+
         else:
             h += "\t// TODO: Inst\n"
-            ff=""
-            pf=""
+            ff = ""
+            pf = ""
             z, n, h_, c = s.f
-            for l, v in [("z",z),("n",n),("h",h_),("c",c)]:
-                if v.lower()==l and not pf: pf="//TODO: "
-                if v!='-':ff+=f"{l} = {v.lower()}, "
-            if ff:ff=ff[:-2]+";\n"
-            h+=pf+ff
-        
-        #if '/' in s.c: h+="\t//TODO: "
-        h += f"\treturn {s.c.split('/')[-1]};\n"
-        
-        h += f'}}  // {repr(s)[1:-1]}'
-        s.cd=h
-        return h
-    def cy(s):
-        r=[s.c]
-        a=list(map(int, s.c.split('/')))
-        a=list(map(lambda x: x - int(s.sz) * 4, a))
-        r.append('/'.join(map(str, a)))
-        a=list(map(lambda x: x - (s.cd.count("cpu_write(") + s.cd.count("cpu_read(") + s.cd.count("sync("))*4, a))
-        r.append('/'.join(map(str, a)))
-        #a=list(map(lambda x: x - (s.cd.count("ADD(") + s.cd.count("ADC(") + s.cd.count("SUB(") + s.cd.count("SBC("))*4, a))
-        a=list(map(lambda x: x - (s.cd.count("PUSH8(") + s.cd.count("POP8("))*4, a))
-        a=list(map(lambda x: x - (s.cd.count("POP16(") + s.cd.count("PUSH16(") + s.cd.count("ADD_SP("))*8, a))
-        a=list(map(lambda x: x - (s.cd.count("ADD_HL(") + s.cd.count("ADD_SP_d("))*4, a))
-        r.append('/'.join(map(str, a)))
-        return r[-1][0]=='0', r
+            for l, v in [("z", z), ("n", n), ("h", h_), ("c", c)]:
+                if v.lower() == l and not pf: pf = "//TODO: "
+                if v != '-': ff += f"{l} = {v.lower()}, "
+            if ff: ff = ff[:-2] + ";\n"
+            h += pf + ff
 
-    
+        # if '/' in s.c: h+="\t//TODO: "
+
+        h += f'}}  // {repr(s)[1:-1]}'
+        s.cd = h
+        return h
+
+    def cy(s):
+        r = [s.c]
+        a = list(map(int, s.c.split('/')))
+        a = list(map(lambda x: x - int(s.sz) * 4, a))
+        r.append('/'.join(map(str, a)))
+        a = list(map(lambda x: x - (s.cd.count("cpu_write(") + s.cd.count("cpu_read(") + s.cd.count("sync(")) * 4, a))
+        r.append('/'.join(map(str, a)))
+        # a=list(map(lambda x: x - (s.cd.count("ADD(") + s.cd.count("ADC(") + s.cd.count("SUB(") + s.cd.count("SBC("))*4, a))
+        a = list(map(lambda x: x - (s.cd.count("PUSH8(") + s.cd.count("POP8(")) * 4, a))
+        a = list(map(lambda x: x - (s.cd.count("POP16(") + s.cd.count("PUSH16(") + s.cd.count("ADD_SP(")) * 8, a))
+        a = list(map(lambda x: x - (s.cd.count("ADD_HL(") + s.cd.count("ADD_SP_d(")) * 4, a))
+        r.append('/'.join(map(str, a)))
+        return r[-1][0] == '0', r
+
+
 for u in range(256):
     c.append(i(n1, u))
-    
+
 for u in range(256):
     c.append(i(n2, u))
 
@@ -592,56 +602,31 @@ print("\n#pragma endregion\n\n#pragma region GBZ80 Instruction Set")
 
 print("static Instruction * Instructions[] = {\n\t", end='')
 for u in range(256):
-    if u & 15 == 0 and u: print(f"// {(u-1)&0xf0:02X}\n\t", end='')
+    if u & 15 == 0 and u: print(f"// {(u - 1) & 0xf0:02X}\n\t", end='')
     print(f"i{u:02X}, ", end='')
 print('// F0\n};\n')
 
-
 print("static Instruction * HighInstructions[] = {\n\t", end='')
 for u in range(256):
-    if u & 15 == 0 and u: print(f"// {(u-1)&0xf0:02X}\n\t", end='')
+    if u & 15 == 0 and u: print(f"// {(u - 1) & 0xf0:02X}\n\t", end='')
     print(f"iCB{u:02X}, ", end='')
 print('// F0\n};\n')
 
-
 print("static u8 OPSize[] = {\n\t", end='')
 for u in range(256):
-    if u & 15 == 0 and u: print(f"// {(u-1)&0xf0:02X}\n\t", end='')
+    if u & 15 == 0 and u: print(f"// {(u - 1) & 0xf0:02X}\n\t", end='')
     print(f"{int(c[u].sz) - 1}, ", end='')
 print('// F0\n};\n')
 
-
-
 print("const char * const OPName[] = {\n\t", end='')
 for u in range(512):
-    if u & 15 == 0 and u: print(f"// {(u-1)&0xf0:02X}\n\t", end='')
+    if u & 15 == 0 and u: print(f"// {(u - 1) & 0xf0:02X}\n\t", end='')
     print(f"\"{c[u].n:{max(len(i.n) for i in c)}}\", ", end='')
 print('// F0\n};\n')
 
 print("\n#pragma endregion\n")
 
 for u in range(512):
-    if c[u].n!="UNKN":
-        v,r=c[u].cy()
-        if not v:print(f"{v}\t{c[u].opc:02X} : {c[u].n}\t: {int(c[u].c.split('/')[-1])-int(c[u].sz)*4}:", *r)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    if c[u].n != "UNKN":
+        v, r = c[u].cy()
+        if not v: print(f"{v}\t{c[u].opc:02X} : {c[u].n}\t: {int(c[u].c.split('/')[-1]) - int(c[u].sz) * 4}:", *r)

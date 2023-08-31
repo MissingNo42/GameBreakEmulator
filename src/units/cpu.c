@@ -19,7 +19,7 @@ u16 PCX = 0;
 
 ////////////////////////    Types   ///////////////////////////
 
-typedef u8 Instruction();
+typedef void Instruction();
 
 
 ////////////////////////   Macros   ///////////////////////////
@@ -84,15 +84,14 @@ static inline u16 fetch_2operand(){
 	return OPERAND;
 }
 
-static inline u8 UnknownOpcode(){
-	ERROR("Unknown Opcode", "OPC = %02X\n", OPCODE);
-	return 4;
+static inline void UnknownOpcode(){
+	CRITICAL("Unknown Opcode", "OPC = %02X\n", OPCODE);
 }
 
 static Instruction * HighInstructions[0x100];
 
-#define INST(code, name) static inline u8 i##code()
-#define INST_H(code, name) static inline u8 iCB##code()
+#define INST(code, name) static inline void i##code()
+#define INST_H(code, name) static inline void iCB##code()
 
 #define ADD(r) u32 R = A + (r), Cx = A ^ (r) ^ R; A = R; c = Cx >> 8; z = !A; h = Cx >> 4; n = 0
 #define ADC(r) u32 R = A + (r) + c, Cx = A ^ (r) ^ R; A = R; c = Cx >> 8; z = !A; h = Cx >> 4; n = 0
@@ -161,274 +160,221 @@ static inline u16 POP16(){
 
 INST(88, ADC_A_B) {
 	ADC(B);
-	return 4;
 }  // 88 = ADC A,B	 | Fg: Z 0 H C | Sz: 1 | Cc: 4
 
 INST(89, ADC_A_C) {
 	ADC(C);
-	return 4;
 }  // 89 = ADC A,C	 | Fg: Z 0 H C | Sz: 1 | Cc: 4
 
 INST(8A, ADC_A_D) {
 	ADC(D);
-	return 4;
 }  // 8A = ADC A,D	 | Fg: Z 0 H C | Sz: 1 | Cc: 4
 
 INST(8B, ADC_A_E) {
 	ADC(E);
-	return 4;
 }  // 8B = ADC A,E	 | Fg: Z 0 H C | Sz: 1 | Cc: 4
 
 INST(8C, ADC_A_H) {
 	ADC(H);
-	return 4;
 }  // 8C = ADC A,H	 | Fg: Z 0 H C | Sz: 1 | Cc: 4
 
 INST(8D, ADC_A_L) {
 	ADC(L);
-	return 4;
 }  // 8D = ADC A,L	 | Fg: Z 0 H C | Sz: 1 | Cc: 4
 
 INST(8E, ADC_A_(HL)) {
 	u8 r = cpu_read(HL);
 	ADC(r);
-	return 8;
 }  // 8E = ADC A,(HL)	 | Fg: Z 0 H C | Sz: 1 | Cc: 8
 
 INST(8F, ADC_A_A) {
 	ADC(A);
-	return 4;
 }  // 8F = ADC A,A	 | Fg: Z 0 H C | Sz: 1 | Cc: 4
 
 INST(CE, ADC_A_D8) {
 	ADC(O1);
-	return 8;
 }  // CE = ADC A,d8	 | Fg: Z 0 H C | Sz: 2 | Cc: 8
 
 INST(09, ADD_HL_BC) {
 	ADD_HL(BC);
-	return 8;
 }  // 09 = ADD HL,BC	 | Fg: - 0 H C | Sz: 1 | Cc: 8
 
 INST(19, ADD_HL_DE) {
 	ADD_HL(DE);
-	return 8;
 }  // 19 = ADD HL,DE	 | Fg: - 0 H C | Sz: 1 | Cc: 8
 
 INST(29, ADD_HL_HL) {
 	ADD_HL(HL);
-	return 8;
 }  // 29 = ADD HL,HL	 | Fg: - 0 H C | Sz: 1 | Cc: 8
 
 INST(39, ADD_HL_SP) {
 	ADD_HL(SP);
-	return 8;
 }  // 39 = ADD HL,SP	 | Fg: - 0 H C | Sz: 1 | Cc: 8
 
 INST(80, ADD_A_B) {
 	ADD(B);
-	return 4;
 }  // 80 = ADD A,B	 | Fg: Z 0 H C | Sz: 1 | Cc: 4
 
 INST(81, ADD_A_C) {
 	ADD(C);
-	return 4;
 }  // 81 = ADD A,C	 | Fg: Z 0 H C | Sz: 1 | Cc: 4
 
 INST(82, ADD_A_D) {
 	ADD(D);
-	return 4;
 }  // 82 = ADD A,D	 | Fg: Z 0 H C | Sz: 1 | Cc: 4
 
 INST(83, ADD_A_E) {
 	ADD(E);
-	return 4;
 }  // 83 = ADD A,E	 | Fg: Z 0 H C | Sz: 1 | Cc: 4
 
 INST(84, ADD_A_H) {
 	ADD(H);
-	return 4;
 }  // 84 = ADD A,H	 | Fg: Z 0 H C | Sz: 1 | Cc: 4
 
 INST(85, ADD_A_L) {
 	ADD(L);
-	return 4;
 }  // 85 = ADD A,L	 | Fg: Z 0 H C | Sz: 1 | Cc: 4
 
 INST(86, ADD_A_(HL)) {
 	u8 r = cpu_read(HL);
 	ADD(r);
-	return 8;
 }  // 86 = ADD A,(HL)	 | Fg: Z 0 H C | Sz: 1 | Cc: 8
 
 INST(87, ADD_A_A) {
 	ADD(A);
-	return 4;
 }  // 87 = ADD A,A	 | Fg: Z 0 H C | Sz: 1 | Cc: 4
 
 INST(C6, ADD_A_D8) {
 	ADD(O1);
-	return 8;
 }  // C6 = ADD A,d8	 | Fg: Z 0 H C | Sz: 2 | Cc: 8
 
 INST(E8, ADD_SP_R8) {
 	ADD_SP(O1);
-	return 16;
 }  // E8 = ADD SP,r8	 | Fg: 0 0 H C | Sz: 2 | Cc: 16
 
 INST(A0, AND_B) {
 	AND(B);
-	return 4;
 }  // A0 = AND B	 | Fg: Z 0 1 0 | Sz: 1 | Cc: 4
 
 INST(A1, AND_C) {
 	AND(C);
-	return 4;
 }  // A1 = AND C	 | Fg: Z 0 1 0 | Sz: 1 | Cc: 4
 
 INST(A2, AND_D) {
 	AND(D);
-	return 4;
 }  // A2 = AND D	 | Fg: Z 0 1 0 | Sz: 1 | Cc: 4
 
 INST(A3, AND_E) {
 	AND(E);
-	return 4;
 }  // A3 = AND E	 | Fg: Z 0 1 0 | Sz: 1 | Cc: 4
 
 INST(A4, AND_H) {
 	AND(H);
-	return 4;
 }  // A4 = AND H	 | Fg: Z 0 1 0 | Sz: 1 | Cc: 4
 
 INST(A5, AND_L) {
 	AND(L);
-	return 4;
 }  // A5 = AND L	 | Fg: Z 0 1 0 | Sz: 1 | Cc: 4
 
 INST(A6, AND_(HL)) {
 	AND(cpu_read(HL));
-	return 8;
 }  // A6 = AND (HL)	 | Fg: Z 0 1 0 | Sz: 1 | Cc: 8
 
 INST(A7, AND_A) {
 	AND(A);
-	return 4;
 }  // A7 = AND A	 | Fg: Z 0 1 0 | Sz: 1 | Cc: 4
 
 INST(E6, AND_D8) {
 	AND(O1);
-	return 8;
 }  // E6 = AND d8	 | Fg: Z 0 1 0 | Sz: 2 | Cc: 8
 
 INST(C4, CALL_NZ_A16) {
 	if (!z) {
 		PUSH16(PC);
 		PC = OPERAND;
-	sync(4);
-		return 24;
+		sync(4);
 	}
-	return 12;
 }  // C4 = CALL NZ,a16	 | Fg: - - - - | Sz: 3 | Cc: 24/12
 
 INST(CC, CALL_Z_A16) {
 	if (z) {
 		PUSH16(PC);
 		PC = OPERAND;
-	sync(4);
-		return 24;
+		sync(4);
 	}
-	return 12;
 }  // CC = CALL Z,a16	 | Fg: - - - - | Sz: 3 | Cc: 24/12
 
 INST(CD, CALL_A16) {
 	PUSH16(PC);
 	PC = OPERAND;
 	sync(4);
-	return 24;
 }  // CD = CALL a16	 | Fg: - - - - | Sz: 3 | Cc: 24
 
 INST(D4, CALL_NC_A16) {
 	if (!c) {
 		PUSH16(PC);
 		PC = OPERAND;
-	sync(4);
-		return 24;
+		sync(4);
 	}
-	return 12;
 }  // D4 = CALL NC,a16	 | Fg: - - - - | Sz: 3 | Cc: 24/12
 
 INST(DC, CALL_C_A16) {
 	if (c) {
 		PUSH16(PC);
 		PC = OPERAND;
-	sync(4);
-		return 24;
+		sync(4);
 	}
-	return 12;
 }  // DC = CALL C,a16	 | Fg: - - - - | Sz: 3 | Cc: 24/12
 
 INST(3F, CCF) {
 	CCF();
-	return 4;
 }  // 3F = CCF	 | Fg: - 0 0 C | Sz: 1 | Cc: 4
 
 INST(B8, CP_B) {
 	CP(B);
-	return 4;
 }  // B8 = CP B	 | Fg: Z 1 H C | Sz: 1 | Cc: 4
 
 INST(B9, CP_C) {
 	CP(C);
-	return 4;
 }  // B9 = CP C	 | Fg: Z 1 H C | Sz: 1 | Cc: 4
 
 INST(BA, CP_D) {
 	CP(D);
-	return 4;
 }  // BA = CP D	 | Fg: Z 1 H C | Sz: 1 | Cc: 4
 
 INST(BB, CP_E) {
 	CP(E);
-	return 4;
 }  // BB = CP E	 | Fg: Z 1 H C | Sz: 1 | Cc: 4
 
 INST(BC, CP_H) {
 	CP(H);
-	return 4;
 }  // BC = CP H	 | Fg: Z 1 H C | Sz: 1 | Cc: 4
 
 INST(BD, CP_L) {
 	CP(L);
-	return 4;
 }  // BD = CP L	 | Fg: Z 1 H C | Sz: 1 | Cc: 4
 
 INST(BE, CP_(HL)) {
 	u8 r = cpu_read(HL);
 	CP(r);
-	return 8;
 }  // BE = CP (HL)	 | Fg: Z 1 H C | Sz: 1 | Cc: 8
 
 INST(BF, CP_A) {
 	CP(A);
-	return 4;
 }  // BF = CP A	 | Fg: Z 1 H C | Sz: 1 | Cc: 4
 
 INST(FE, CP_D8) {
 	CP(O1);
-	return 8;
 }  // FE = CP d8	 | Fg: Z 1 H C | Sz: 2 | Cc: 8
 
 INST(2F, CPL) {
 	CPL();
-	return 4;
 }  // 2F = CPL	 | Fg: - 1 1 - | Sz: 1 | Cc: 4
 
 INST(27, DAA) {
 	s32 daa = A;
-	
 	if (n) {
-		if (h) daa = (daa - 6) & 0xff;
+		if (h) daa = (daa - 0x06) & 0xff;
 		if (c) daa -= 0x60;
 	} else {
 		if (h || (daa & 0xf) > 9) daa += 0x06;
@@ -437,83 +383,68 @@ INST(27, DAA) {
 
 	A = daa, h = 0, z = !A;
 	if ((daa & 0x100) == 0x100) c = 1;
-	return 4;
 }  // 27 = DAA	 | Fg: Z - 0 C | Sz: 1 | Cc: 4
 
 INST(05, DEC_B) {
 	DEC(B);
-	return 4;
 }  // 05 = DEC B	 | Fg: Z 1 H - | Sz: 1 | Cc: 4
 
 INST(0B, DEC_BC) {
 	BC--;
 	sync(4);
-	return 8;
 }  // 0B = DEC BC	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(0D, DEC_C) {
 	DEC(C);
-	return 4;
 }  // 0D = DEC C	 | Fg: Z 1 H - | Sz: 1 | Cc: 4
 
 INST(15, DEC_D) {
 	DEC(D);
-	return 4;
 }  // 15 = DEC D	 | Fg: Z 1 H - | Sz: 1 | Cc: 4
 
 INST(1B, DEC_DE) {
 	DE--;
 	sync(4);
-	return 8;
 }  // 1B = DEC DE	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(1D, DEC_E) {
 	DEC(E);
-	return 4;
 }  // 1D = DEC E	 | Fg: Z 1 H - | Sz: 1 | Cc: 4
 
 INST(25, DEC_H) {
 	DEC(H);
-	return 4;
 }  // 25 = DEC H	 | Fg: Z 1 H - | Sz: 1 | Cc: 4
 
 INST(2B, DEC_HL) {
 	HL--;
 	sync(4);
-	return 8;
 }  // 2B = DEC HL	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(2D, DEC_L) {
 	DEC(L);
-	return 4;
 }  // 2D = DEC L	 | Fg: Z 1 H - | Sz: 1 | Cc: 4
 
 INST(35, DEC_(HL)) {
 	u8 r = cpu_read(HL);
 	DEC(r);
 	cpu_write(HL, r);
-	return 12;
 }  // 35 = DEC (HL)	 | Fg: Z 1 H - | Sz: 1 | Cc: 12
 
 INST(3B, DEC_SP) {
 	SP--;
 	sync(4);
-	return 8;
 }  // 3B = DEC SP	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(3D, DEC_A) {
 	DEC(A);
-	return 4;
 }  // 3D = DEC A	 | Fg: Z 1 H - | Sz: 1 | Cc: 4
 
 INST(F3, DI) {
 	IME = 0;
-	return 4;
 }  // F3 = DI	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(FB, EI) {
 	IME_DELAY |= 2;
-	return 4;
 }  // FB = EI	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(76, HALT) {
@@ -527,722 +458,580 @@ INST(76, HALT) {
 		dec:
 		PC--; // emulate halting by reexecuting halt
 }
-	return 4;
 }  // 76 = HALT	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(03, INC_BC) {
 	BC++;
 	sync(4);
-	return 8;
 }  // 03 = INC BC	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(04, INC_B) {
 	INC(B);
-	return 4;
 }  // 04 = INC B	 | Fg: Z 0 H - | Sz: 1 | Cc: 4
 
 INST(0C, INC_C) {
 	INC(C);
-	return 4;
 }  // 0C = INC C	 | Fg: Z 0 H - | Sz: 1 | Cc: 4
 
 INST(13, INC_DE) {
 	DE++;
 	sync(4);
-	return 8;
 }  // 13 = INC DE	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(14, INC_D) {
 	INC(D);
-	return 4;
 }  // 14 = INC D	 | Fg: Z 0 H - | Sz: 1 | Cc: 4
 
 INST(1C, INC_E) {
 	INC(E);
-	return 4;
 }  // 1C = INC E	 | Fg: Z 0 H - | Sz: 1 | Cc: 4
 
 INST(23, INC_HL) {
 	HL++;
 	sync(4);
-	return 8;
 }  // 23 = INC HL	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(24, INC_H) {
 	INC(H);
-	return 4;
 }  // 24 = INC H	 | Fg: Z 0 H - | Sz: 1 | Cc: 4
 
 INST(2C, INC_L) {
 	INC(L);
-	return 4;
 }  // 2C = INC L	 | Fg: Z 0 H - | Sz: 1 | Cc: 4
 
 INST(33, INC_SP) {
 	SP++;
 	sync(4);
-	return 8;
 }  // 33 = INC SP	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(34, INC_(HL)) {
 	u8 r = cpu_read(HL);
 	INC(r);
 	cpu_write(HL, r);
-	return 12;
 }  // 34 = INC (HL)	 | Fg: Z 0 H - | Sz: 1 | Cc: 12
 
 INST(3C, INC_A) {
 	INC(A);
-	return 4;
 }  // 3C = INC A	 | Fg: Z 0 H - | Sz: 1 | Cc: 4
 
 INST(C2, JP_NZ_A16) {
 	if (!z) {
 		PC = OPERAND;
 		sync(4);
-		 return 16;
 	}
-	return 12;
 }  // C2 = JP NZ,a16	 | Fg: - - - - | Sz: 3 | Cc: 16/12
 
 INST(C3, JP_A16) {
 	PC = OPERAND;
 	sync(4);
-	return 16;
 }  // C3 = JP a16	 | Fg: - - - - | Sz: 3 | Cc: 16
 
 INST(CA, JP_Z_A16) {
 	if (z) {
 		PC = OPERAND;
 		sync(4);
-		 return 16;
 	}
-	return 12;
 }  // CA = JP Z,a16	 | Fg: - - - - | Sz: 3 | Cc: 16/12
 
 INST(D2, JP_NC_A16) {
 	if (!c) {
 		PC = OPERAND;
 		sync(4);
-		 return 16;
 	}
-	return 12;
 }  // D2 = JP NC,a16	 | Fg: - - - - | Sz: 3 | Cc: 16/12
 
 INST(DA, JP_C_A16) {
 	if (c) {
 		PC = OPERAND;
 		sync(4);
-		 return 16;
 	}
-	return 12;
 }  // DA = JP C,a16	 | Fg: - - - - | Sz: 3 | Cc: 16/12
 
 INST(E9, JP_(HL)) {
 	PC = HL;
-	return 4;
 }  // E9 = JP (HL)	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(18, JR_R8) {
 	PC += (s8)O1;
 	sync(4);
-	return 12;
 }  // 18 = JR r8	 | Fg: - - - - | Sz: 2 | Cc: 12
 
 INST(20, JR_NZ_R8) {
 	if (!z) {
 		PC += (s8)O1;
 		sync(4);
-		return 12;
 	}
-	return 8;
 }  // 20 = JR NZ,r8	 | Fg: - - - - | Sz: 2 | Cc: 12/8
 
 INST(28, JR_Z_R8) {
 	if (z) {
 		PC += (s8)O1;
 		sync(4);
-		return 12;
 	}
-	return 8;
 }  // 28 = JR Z,r8	 | Fg: - - - - | Sz: 2 | Cc: 12/8
 
 INST(30, JR_NC_R8) {
 	if (!c) {
 		PC += (s8)O1;
 		sync(4);
-		return 12;
 	}
-	return 8;
 }  // 30 = JR NC,r8	 | Fg: - - - - | Sz: 2 | Cc: 12/8
 
 INST(38, JR_C_R8) {
 	if (c) {
 		PC += (s8)O1;
 		sync(4);
-		return 12;
 	}
-	return 8;
 }  // 38 = JR C,r8	 | Fg: - - - - | Sz: 2 | Cc: 12/8
 
 INST(01, LD_BC_D16) {
 	BC = OPERAND;
-	return 12;
 }  // 01 = LD BC,d16	 | Fg: - - - - | Sz: 3 | Cc: 12
 
 INST(02, LD_(BC)_A) {
 	cpu_write(BC, A);
-	return 8;
 }  // 02 = LD (BC),A	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(06, LD_B_D8) {
 	B = O1;
-	return 8;
 }  // 06 = LD B,d8	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST(08, LD_(A16)_SP) {
 	cpu_write(OPERAND, SP);
 	cpu_write(OPERAND + 1, SP >> 8);
-	return 20;
 }  // 08 = LD (a16),SP	 | Fg: - - - - | Sz: 3 | Cc: 20
 
 INST(0A, LD_A_(BC)) {
 	A = cpu_read(BC);
-	return 8;
 }  // 0A = LD A,(BC)	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(0E, LD_C_D8) {
 	C = O1;
-	return 8;
 }  // 0E = LD C,d8	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST(11, LD_DE_D16) {
 	DE = OPERAND;
-	return 12;
 }  // 11 = LD DE,d16	 | Fg: - - - - | Sz: 3 | Cc: 12
 
 INST(12, LD_(DE)_A) {
 	cpu_write(DE, A);
-	return 8;
 }  // 12 = LD (DE),A	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(16, LD_D_D8) {
 	D = O1;
-	return 8;
 }  // 16 = LD D,d8	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST(1A, LD_A_(DE)) {
 	A = cpu_read(DE);
-	return 8;
 }  // 1A = LD A,(DE)	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(1E, LD_E_D8) {
 	E = O1;
-	return 8;
 }  // 1E = LD E,d8	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST(21, LD_HL_D16) {
 	HL = OPERAND;
-	return 12;
 }  // 21 = LD HL,d16	 | Fg: - - - - | Sz: 3 | Cc: 12
 
 INST(22, LD_(HL_)_A) {
 	cpu_write(HL++, A);
-	return 8;
 }  // 22 = LD (HL+),A	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(26, LD_H_D8) {
 	H = O1;
-	return 8;
 }  // 26 = LD H,d8	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST(2A, LD_A_(HL_)) {
 	A = cpu_read(HL++);
-	return 8;
 }  // 2A = LD A,(HL+)	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(2E, LD_L_D8) {
 	L = O1;
-	return 8;
 }  // 2E = LD L,d8	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST(31, LD_SP_D16) {
 	SP = OPERAND;
-	return 12;
 }  // 31 = LD SP,d16	 | Fg: - - - - | Sz: 3 | Cc: 12
 
 INST(32, LD_(HL-)_A) {
 	cpu_write(HL--, A);
-	return 8;
 }  // 32 = LD (HL-),A	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(36, LD_(HL)_D8) {
 	cpu_write(HL, O1);
-	return 12;
 }  // 36 = LD (HL),d8	 | Fg: - - - - | Sz: 2 | Cc: 12
 
 INST(3A, LD_A_(HL-)) {
 	A = cpu_read(HL--);
-	return 8;
 }  // 3A = LD A,(HL-)	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(3E, LD_A_D8) {
 	A = O1;
-	return 8;
 }  // 3E = LD A,d8	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST(40, LD_B_B) {
 	B = B;
-	return 4;
 }  // 40 = LD B,B	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(41, LD_B_C) {
 	B = C;
-	return 4;
 }  // 41 = LD B,C	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(42, LD_B_D) {
 	B = D;
-	return 4;
 }  // 42 = LD B,D	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(43, LD_B_E) {
 	B = E;
-	return 4;
 }  // 43 = LD B,E	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(44, LD_B_H) {
 	B = H;
-	return 4;
 }  // 44 = LD B,H	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(45, LD_B_L) {
 	B = L;
-	return 4;
 }  // 45 = LD B,L	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(46, LD_B_(HL)) {
 	B = cpu_read(HL);
-	return 8;
 }  // 46 = LD B,(HL)	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(47, LD_B_A) {
 	B = A;
-	return 4;
 }  // 47 = LD B,A	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(48, LD_C_B) {
 	C = B;
-	return 4;
 }  // 48 = LD C,B	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(49, LD_C_C) {
 	C = C;
-	return 4;
 }  // 49 = LD C,C	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(4A, LD_C_D) {
 	C = D;
-	return 4;
 }  // 4A = LD C,D	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(4B, LD_C_E) {
 	C = E;
-	return 4;
 }  // 4B = LD C,E	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(4C, LD_C_H) {
 	C = H;
-	return 4;
 }  // 4C = LD C,H	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(4D, LD_C_L) {
 	C = L;
-	return 4;
 }  // 4D = LD C,L	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(4E, LD_C_(HL)) {
 	C = cpu_read(HL);
-	return 8;
 }  // 4E = LD C,(HL)	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(4F, LD_C_A) {
 	C = A;
-	return 4;
 }  // 4F = LD C,A	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(50, LD_D_B) {
 	D = B;
-	return 4;
 }  // 50 = LD D,B	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(51, LD_D_C) {
 	D = C;
-	return 4;
 }  // 51 = LD D,C	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(52, LD_D_D) {
 	D = D;
-	return 4;
 }  // 52 = LD D,D	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(53, LD_D_E) {
 	D = E;
-	return 4;
 }  // 53 = LD D,E	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(54, LD_D_H) {
 	D = H;
-	return 4;
 }  // 54 = LD D,H	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(55, LD_D_L) {
 	D = L;
-	return 4;
 }  // 55 = LD D,L	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(56, LD_D_(HL)) {
 	D = cpu_read(HL);
-	return 8;
 }  // 56 = LD D,(HL)	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(57, LD_D_A) {
 	D = A;
-	return 4;
 }  // 57 = LD D,A	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(58, LD_E_B) {
 	E = B;
-	return 4;
 }  // 58 = LD E,B	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(59, LD_E_C) {
 	E = C;
-	return 4;
 }  // 59 = LD E,C	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(5A, LD_E_D) {
 	E = D;
-	return 4;
 }  // 5A = LD E,D	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(5B, LD_E_E) {
 	E = E;
-	return 4;
 }  // 5B = LD E,E	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(5C, LD_E_H) {
 	E = H;
-	return 4;
 }  // 5C = LD E,H	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(5D, LD_E_L) {
 	E = L;
-	return 4;
 }  // 5D = LD E,L	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(5E, LD_E_(HL)) {
 	E = cpu_read(HL);
-	return 8;
 }  // 5E = LD E,(HL)	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(5F, LD_E_A) {
 	E = A;
-	return 4;
 }  // 5F = LD E,A	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(60, LD_H_B) {
 	H = B;
-	return 4;
 }  // 60 = LD H,B	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(61, LD_H_C) {
 	H = C;
-	return 4;
 }  // 61 = LD H,C	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(62, LD_H_D) {
 	H = D;
-	return 4;
 }  // 62 = LD H,D	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(63, LD_H_E) {
 	H = E;
-	return 4;
 }  // 63 = LD H,E	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(64, LD_H_H) {
 	H = H;
-	return 4;
 }  // 64 = LD H,H	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(65, LD_H_L) {
 	H = L;
-	return 4;
 }  // 65 = LD H,L	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(66, LD_H_(HL)) {
 	H = cpu_read(HL);
-	return 8;
 }  // 66 = LD H,(HL)	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(67, LD_H_A) {
 	H = A;
-	return 4;
 }  // 67 = LD H,A	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(68, LD_L_B) {
 	L = B;
-	return 4;
 }  // 68 = LD L,B	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(69, LD_L_C) {
 	L = C;
-	return 4;
 }  // 69 = LD L,C	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(6A, LD_L_D) {
 	L = D;
-	return 4;
 }  // 6A = LD L,D	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(6B, LD_L_E) {
 	L = E;
-	return 4;
 }  // 6B = LD L,E	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(6C, LD_L_H) {
 	L = H;
-	return 4;
 }  // 6C = LD L,H	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(6D, LD_L_L) {
 	L = L;
-	return 4;
 }  // 6D = LD L,L	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(6E, LD_L_(HL)) {
 	L = cpu_read(HL);
-	return 8;
 }  // 6E = LD L,(HL)	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(6F, LD_L_A) {
 	L = A;
-	return 4;
 }  // 6F = LD L,A	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(70, LD_(HL)_B) {
 	cpu_write(HL, B);
-	return 8;
 }  // 70 = LD (HL),B	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(71, LD_(HL)_C) {
 	cpu_write(HL, C);
-	return 8;
 }  // 71 = LD (HL),C	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(72, LD_(HL)_D) {
 	cpu_write(HL, D);
-	return 8;
 }  // 72 = LD (HL),D	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(73, LD_(HL)_E) {
 	cpu_write(HL, E);
-	return 8;
 }  // 73 = LD (HL),E	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(74, LD_(HL)_H) {
 	cpu_write(HL, H);
-	return 8;
 }  // 74 = LD (HL),H	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(75, LD_(HL)_L) {
 	cpu_write(HL, L);
-	return 8;
 }  // 75 = LD (HL),L	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(77, LD_(HL)_A) {
 	cpu_write(HL, A);
-	return 8;
 }  // 77 = LD (HL),A	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(78, LD_A_B) {
 	A = B;
-	return 4;
 }  // 78 = LD A,B	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(79, LD_A_C) {
 	A = C;
-	return 4;
 }  // 79 = LD A,C	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(7A, LD_A_D) {
 	A = D;
-	return 4;
 }  // 7A = LD A,D	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(7B, LD_A_E) {
 	A = E;
-	return 4;
 }  // 7B = LD A,E	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(7C, LD_A_H) {
 	A = H;
-	return 4;
 }  // 7C = LD A,H	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(7D, LD_A_L) {
 	A = L;
-	return 4;
 }  // 7D = LD A,L	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(7E, LD_A_(HL)) {
 	A = cpu_read(HL);
-	return 8;
 }  // 7E = LD A,(HL)	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(7F, LD_A_A) {
 	A = A;
-	return 4;
 }  // 7F = LD A,A	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(E2, LD_(C)_A) {
 	cpu_write(0xFF00 | C, A);
-	return 8;
 }  // E2 = LD (C),A	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(EA, LD_(A16)_A) {
 	cpu_write(OPERAND, A);
-	return 16;
 }  // EA = LD (a16),A	 | Fg: - - - - | Sz: 3 | Cc: 16
 
 INST(F2, LD_A_(C)) {
 	A = cpu_read(0xFF00 | C);
-	return 8;
 }  // F2 = LD A,(C)	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(F8, LD_HL_SP_R8) {
 	ADD_SP_d(O1, HL);
-	return 12;
 }  // F8 = LD HL,SP+r8	 | Fg: 0 0 H C | Sz: 2 | Cc: 12
 
 INST(F9, LD_SP_HL) {
 	SP = HL;
 	sync(4);
-	return 8;
 }  // F9 = LD SP,HL	 | Fg: - - - - | Sz: 1 | Cc: 8
 
 INST(FA, LD_A_(A16)) {
 	A = cpu_read(OPERAND);
-	return 16;
 }  // FA = LD A,(a16)	 | Fg: - - - - | Sz: 3 | Cc: 16
 
 INST(E0, LDH_(A8)_A) {
 	cpu_write(0xFF00 | O1, A);
-	return 12;
 }  // E0 = LDH (a8),A	 | Fg: - - - - | Sz: 2 | Cc: 12
 
 INST(F0, LDH_A_(A8)) {
 	A = cpu_read(0xFF00 | O1);
-	return 12;
 }  // F0 = LDH A,(a8)	 | Fg: - - - - | Sz: 2 | Cc: 12
 
 INST(00, NOP) {
-	return 4;
 }  // 00 = NOP	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(B0, OR_B) {
 	OR(B);
-	return 4;
 }  // B0 = OR B	 | Fg: Z 0 0 0 | Sz: 1 | Cc: 4
 
 INST(B1, OR_C) {
 	OR(C);
-	return 4;
 }  // B1 = OR C	 | Fg: Z 0 0 0 | Sz: 1 | Cc: 4
 
 INST(B2, OR_D) {
 	OR(D);
-	return 4;
 }  // B2 = OR D	 | Fg: Z 0 0 0 | Sz: 1 | Cc: 4
 
 INST(B3, OR_E) {
 	OR(E);
-	return 4;
 }  // B3 = OR E	 | Fg: Z 0 0 0 | Sz: 1 | Cc: 4
 
 INST(B4, OR_H) {
 	OR(H);
-	return 4;
 }  // B4 = OR H	 | Fg: Z 0 0 0 | Sz: 1 | Cc: 4
 
 INST(B5, OR_L) {
 	OR(L);
-	return 4;
 }  // B5 = OR L	 | Fg: Z 0 0 0 | Sz: 1 | Cc: 4
 
 INST(B6, OR_(HL)) {
 	OR(cpu_read(HL));
-	return 8;
 }  // B6 = OR (HL)	 | Fg: Z 0 0 0 | Sz: 1 | Cc: 8
 
 INST(B7, OR_A) {
 	OR(A);
-	return 4;
 }  // B7 = OR A	 | Fg: Z 0 0 0 | Sz: 1 | Cc: 4
 
 INST(F6, OR_D8) {
 	OR(O1);
-	return 8;
 }  // F6 = OR d8	 | Fg: Z 0 0 0 | Sz: 2 | Cc: 8
 
 INST(C1, POP_BC) {
 	BC = POP16();
-	return 12;
 }  // C1 = POP BC	 | Fg: - - - - | Sz: 1 | Cc: 12
 
 INST(D1, POP_DE) {
 	DE = POP16();
-	return 12;
 }  // D1 = POP DE	 | Fg: - - - - | Sz: 1 | Cc: 12
 
 INST(E1, POP_HL) {
 	HL = POP16();
-	return 12;
 }  // E1 = POP HL	 | Fg: - - - - | Sz: 1 | Cc: 12
 
 INST(F1, POP_AF) {
 	AF = POP16();
 	Fx = 0;
-	return 12;
 }  // F1 = POP AF	 | Fg: Z N H C | Sz: 1 | Cc: 12
 
 INST(CB, PREFIX_CB) {
-	return HighInstructions[O1]();
+	HighInstructions[O1]();
 } // CB = PREFIX CB	 | Fg: - - - - | Sz: 2 | Cc: 4
 
 INST(C5, PUSH_BC) {
 	PUSH16(BC);
 	sync(4);
-	return 16;
 }  // C5 = PUSH BC	 | Fg: - - - - | Sz: 1 | Cc: 16
 
 INST(D5, PUSH_DE) {
 	PUSH16(DE);
 	sync(4);
-	return 16;
 }  // D5 = PUSH DE	 | Fg: - - - - | Sz: 1 | Cc: 16
 
 INST(E5, PUSH_HL) {
 	PUSH16(HL);
 	sync(4);
-	return 16;
 }  // E5 = PUSH HL	 | Fg: - - - - | Sz: 1 | Cc: 16
 
 INST(F5, PUSH_AF) {
 	PUSH16(AF);
 	sync(4);
-	return 16;
 }  // F5 = PUSH AF	 | Fg: - - - - | Sz: 1 | Cc: 16
 
 INST(C0, RET_NZ) {
@@ -1250,9 +1039,7 @@ INST(C0, RET_NZ) {
 	if (!z) {
 		PC = POP16();
 		sync(4);
-		 return 20;
 	}
-	return 8;
 }  // C0 = RET NZ	 | Fg: - - - - | Sz: 1 | Cc: 20/8
 
 INST(C8, RET_Z) {
@@ -1260,15 +1047,12 @@ INST(C8, RET_Z) {
 	if (z) {
 		PC = POP16();
 		sync(4);
-		 return 20;
 	}
-	return 8;
 }  // C8 = RET Z	 | Fg: - - - - | Sz: 1 | Cc: 20/8
 
 INST(C9, RET) {
 	PC = POP16();
 	sync(4);
-	return 16;
 }  // C9 = RET	 | Fg: - - - - | Sz: 1 | Cc: 16
 
 INST(D0, RET_NC) {
@@ -1276,9 +1060,7 @@ INST(D0, RET_NC) {
 	if (!c) {
 		PC = POP16();
 		sync(4);
-		 return 20;
 	}
-	return 8;
 }  // D0 = RET NC	 | Fg: - - - - | Sz: 1 | Cc: 20/8
 
 INST(D8, RET_C) {
@@ -1286,143 +1068,118 @@ INST(D8, RET_C) {
 	if (c) {
 		PC = POP16();
 		sync(4);
-		 return 20;
 	}
-	return 8;
 }  // D8 = RET C	 | Fg: - - - - | Sz: 1 | Cc: 20/8
 
 INST(D9, RETI) {
 	PC = POP16();
 	sync(4);
 	IME = 1;
-	return 16;
 }  // D9 = RETI	 | Fg: - - - - | Sz: 1 | Cc: 16
 
 INST(17, RLA) {
 	RLA();
-	return 4;
 }  // 17 = RLA	 | Fg: 0 0 0 C | Sz: 1 | Cc: 4
 
 INST(07, RLCA) {
 	RLCA();
-	return 4;
 }  // 07 = RLCA	 | Fg: 0 0 0 C | Sz: 1 | Cc: 4
 
 INST(1F, RRA) {
 	RRA();
-	return 4;
 }  // 1F = RRA	 | Fg: 0 0 0 C | Sz: 1 | Cc: 4
 
 INST(0F, RRCA) {
 	RRCA();
-	return 4;
 }  // 0F = RRCA	 | Fg: 0 0 0 C | Sz: 1 | Cc: 4
 
 INST(C7, RST_00H) {
 	PUSH16(PC);
 	PC = 0x00;
 	sync(4);
-	return 16;
 }  // C7 = RST 00H	 | Fg: - - - - | Sz: 1 | Cc: 16
 
 INST(CF, RST_08H) {
 	PUSH16(PC);
 	PC = 0x08;
 	sync(4);
-	return 16;
 }  // CF = RST 08H	 | Fg: - - - - | Sz: 1 | Cc: 16
 
 INST(D7, RST_10H) {
 	PUSH16(PC);
 	PC = 0x10;
 	sync(4);
-	return 16;
 }  // D7 = RST 10H	 | Fg: - - - - | Sz: 1 | Cc: 16
 
 INST(DF, RST_18H) {
 	PUSH16(PC);
 	PC = 0x18;
 	sync(4);
-	return 16;
 }  // DF = RST 18H	 | Fg: - - - - | Sz: 1 | Cc: 16
 
 INST(E7, RST_20H) {
 	PUSH16(PC);
 	PC = 0x20;
 	sync(4);
-	return 16;
 }  // E7 = RST 20H	 | Fg: - - - - | Sz: 1 | Cc: 16
 
 INST(EF, RST_28H) {
 	PUSH16(PC);
 	PC = 0x28;
 	sync(4);
-	return 16;
 }  // EF = RST 28H	 | Fg: - - - - | Sz: 1 | Cc: 16
 
 INST(F7, RST_30H) {
 	PUSH16(PC);
 	PC = 0x30;
 	sync(4);
-	return 16;
 }  // F7 = RST 30H	 | Fg: - - - - | Sz: 1 | Cc: 16
 
 INST(FF, RST_38H) {
 	PUSH16(PC);
 	PC = 0x38;
 	sync(4);
-	return 16;
 }  // FF = RST 38H	 | Fg: - - - - | Sz: 1 | Cc: 16
 
 INST(98, SBC_A_B) {
 	SBC(B);
-	return 4;
 }  // 98 = SBC A,B	 | Fg: Z 1 H C | Sz: 1 | Cc: 4
 
 INST(99, SBC_A_C) {
 	SBC(C);
-	return 4;
 }  // 99 = SBC A,C	 | Fg: Z 1 H C | Sz: 1 | Cc: 4
 
 INST(9A, SBC_A_D) {
 	SBC(D);
-	return 4;
 }  // 9A = SBC A,D	 | Fg: Z 1 H C | Sz: 1 | Cc: 4
 
 INST(9B, SBC_A_E) {
 	SBC(E);
-	return 4;
 }  // 9B = SBC A,E	 | Fg: Z 1 H C | Sz: 1 | Cc: 4
 
 INST(9C, SBC_A_H) {
 	SBC(H);
-	return 4;
 }  // 9C = SBC A,H	 | Fg: Z 1 H C | Sz: 1 | Cc: 4
 
 INST(9D, SBC_A_L) {
 	SBC(L);
-	return 4;
 }  // 9D = SBC A,L	 | Fg: Z 1 H C | Sz: 1 | Cc: 4
 
 INST(9E, SBC_A_(HL)) {
 	u8 r = cpu_read(HL);
 	SBC(r);
-	return 8;
 }  // 9E = SBC A,(HL)	 | Fg: Z 1 H C | Sz: 1 | Cc: 8
 
 INST(9F, SBC_A_A) {
 	SBC(A);
-	return 4;
 }  // 9F = SBC A,A	 | Fg: Z 1 H C | Sz: 1 | Cc: 4
 
 INST(DE, SBC_A_D8) {
 	SBC(O1);
-	return 8;
 }  // DE = SBC A,d8	 | Fg: Z 1 H C | Sz: 2 | Cc: 8
 
 INST(37, SCF) {
 	SCF();
-	return 4;
 }  // 37 = SCF	 | Fg: - 0 0 1 | Sz: 1 | Cc: 4
 
 INST(10, STOP_0) {
@@ -1461,53 +1218,43 @@ INST(10, STOP_0) {
 		}
 	}
 
-		return 4;
-}  // 10 = STOP 0	 | Fg: - - - - | Sz: 1 | Cc: 4
+	}  // 10 = STOP 0	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(90, SUB_B) {
 	SUB(B);
-	return 4;
 }  // 90 = SUB B	 | Fg: Z 1 H C | Sz: 1 | Cc: 4
 
 INST(91, SUB_C) {
 	SUB(C);
-	return 4;
 }  // 91 = SUB C	 | Fg: Z 1 H C | Sz: 1 | Cc: 4
 
 INST(92, SUB_D) {
 	SUB(D);
-	return 4;
 }  // 92 = SUB D	 | Fg: Z 1 H C | Sz: 1 | Cc: 4
 
 INST(93, SUB_E) {
 	SUB(E);
-	return 4;
 }  // 93 = SUB E	 | Fg: Z 1 H C | Sz: 1 | Cc: 4
 
 INST(94, SUB_H) {
 	SUB(H);
-	return 4;
 }  // 94 = SUB H	 | Fg: Z 1 H C | Sz: 1 | Cc: 4
 
 INST(95, SUB_L) {
 	SUB(L);
-	return 4;
 }  // 95 = SUB L	 | Fg: Z 1 H C | Sz: 1 | Cc: 4
 
 INST(96, SUB_(HL)) {
 	u8 r = cpu_read(HL);
 	SUB(r);
-	return 8;
 }  // 96 = SUB (HL)	 | Fg: Z 1 H C | Sz: 1 | Cc: 8
 
 INST(97, SUB_A) {
 	SUB(A);
-	return 4;
 }  // 97 = SUB A	 | Fg: Z 1 H C | Sz: 1 | Cc: 4
 
 INST(D6, SUB_D8) {
 	SUB(O1);
-	return 8;
 }  // D6 = SUB d8	 | Fg: Z 1 H C | Sz: 2 | Cc: 8
 #define iD3 UnknownOpcode
 #define iDB UnknownOpcode
@@ -1523,47 +1270,38 @@ INST(D6, SUB_D8) {
 
 INST(A8, XOR_B) {
 	XOR(B);
-	return 4;
 }  // A8 = XOR B	 | Fg: Z 0 0 0 | Sz: 1 | Cc: 4
 
 INST(A9, XOR_C) {
 	XOR(C);
-	return 4;
 }  // A9 = XOR C	 | Fg: Z 0 0 0 | Sz: 1 | Cc: 4
 
 INST(AA, XOR_D) {
 	XOR(D);
-	return 4;
 }  // AA = XOR D	 | Fg: Z 0 0 0 | Sz: 1 | Cc: 4
 
 INST(AB, XOR_E) {
 	XOR(E);
-	return 4;
 }  // AB = XOR E	 | Fg: Z 0 0 0 | Sz: 1 | Cc: 4
 
 INST(AC, XOR_H) {
 	XOR(H);
-	return 4;
 }  // AC = XOR H	 | Fg: Z 0 0 0 | Sz: 1 | Cc: 4
 
 INST(AD, XOR_L) {
 	XOR(L);
-	return 4;
 }  // AD = XOR L	 | Fg: Z 0 0 0 | Sz: 1 | Cc: 4
 
 INST(AE, XOR_(HL)) {
 	XOR(cpu_read(HL));
-	return 8;
 }  // AE = XOR (HL)	 | Fg: Z 0 0 0 | Sz: 1 | Cc: 8
 
 INST(AF, XOR_A) {
 	XOR(A);
-	return 4;
 }  // AF = XOR A	 | Fg: Z 0 0 0 | Sz: 1 | Cc: 4
 
 INST(EE, XOR_D8) {
 	XOR(O1);
-	return 8;
 }  // EE = XOR d8	 | Fg: Z 0 0 0 | Sz: 2 | Cc: 8
 
 #pragma endregion
@@ -1572,1346 +1310,1082 @@ INST(EE, XOR_D8) {
 
 INST_H(40, BIT_0_B) {
 	BIT(0, B);
-	return 8;
 }  // 40 = BIT 0,B	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(41, BIT_0_C) {
 	BIT(0, C);
-	return 8;
 }  // 41 = BIT 0,C	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(42, BIT_0_D) {
 	BIT(0, D);
-	return 8;
 }  // 42 = BIT 0,D	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(43, BIT_0_E) {
 	BIT(0, E);
-	return 8;
 }  // 43 = BIT 0,E	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(44, BIT_0_H) {
 	BIT(0, H);
-	return 8;
 }  // 44 = BIT 0,H	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(45, BIT_0_L) {
 	BIT(0, L);
-	return 8;
 }  // 45 = BIT 0,L	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(46, BIT_0_(HL)) {
 	u8 r = cpu_read(HL);
 	BIT(0, r);
-	cpu_write(HL, r);
-	return 16;
-}  // 46 = BIT 0,(HL)	 | Fg: Z 0 1 - | Sz: 2 | Cc: 16
+}  // 46 = BIT 0,(HL)	 | Fg: Z 0 1 - | Sz: 2 | Cc: 12
 
 INST_H(47, BIT_0_A) {
 	BIT(0, A);
-	return 8;
 }  // 47 = BIT 0,A	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(48, BIT_1_B) {
 	BIT(1, B);
-	return 8;
 }  // 48 = BIT 1,B	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(49, BIT_1_C) {
 	BIT(1, C);
-	return 8;
 }  // 49 = BIT 1,C	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(4A, BIT_1_D) {
 	BIT(1, D);
-	return 8;
 }  // 4A = BIT 1,D	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(4B, BIT_1_E) {
 	BIT(1, E);
-	return 8;
 }  // 4B = BIT 1,E	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(4C, BIT_1_H) {
 	BIT(1, H);
-	return 8;
 }  // 4C = BIT 1,H	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(4D, BIT_1_L) {
 	BIT(1, L);
-	return 8;
 }  // 4D = BIT 1,L	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(4E, BIT_1_(HL)) {
 	u8 r = cpu_read(HL);
 	BIT(1, r);
-	cpu_write(HL, r);
-	return 16;
-}  // 4E = BIT 1,(HL)	 | Fg: Z 0 1 - | Sz: 2 | Cc: 16
+}  // 4E = BIT 1,(HL)	 | Fg: Z 0 1 - | Sz: 2 | Cc: 12
 
 INST_H(4F, BIT_1_A) {
 	BIT(1, A);
-	return 8;
 }  // 4F = BIT 1,A	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(50, BIT_2_B) {
 	BIT(2, B);
-	return 8;
 }  // 50 = BIT 2,B	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(51, BIT_2_C) {
 	BIT(2, C);
-	return 8;
 }  // 51 = BIT 2,C	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(52, BIT_2_D) {
 	BIT(2, D);
-	return 8;
 }  // 52 = BIT 2,D	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(53, BIT_2_E) {
 	BIT(2, E);
-	return 8;
 }  // 53 = BIT 2,E	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(54, BIT_2_H) {
 	BIT(2, H);
-	return 8;
 }  // 54 = BIT 2,H	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(55, BIT_2_L) {
 	BIT(2, L);
-	return 8;
 }  // 55 = BIT 2,L	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(56, BIT_2_(HL)) {
 	u8 r = cpu_read(HL);
 	BIT(2, r);
-	cpu_write(HL, r);
-	return 16;
-}  // 56 = BIT 2,(HL)	 | Fg: Z 0 1 - | Sz: 2 | Cc: 16
+}  // 56 = BIT 2,(HL)	 | Fg: Z 0 1 - | Sz: 2 | Cc: 12
 
 INST_H(57, BIT_2_A) {
 	BIT(2, A);
-	return 8;
 }  // 57 = BIT 2,A	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(58, BIT_3_B) {
 	BIT(3, B);
-	return 8;
 }  // 58 = BIT 3,B	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(59, BIT_3_C) {
 	BIT(3, C);
-	return 8;
 }  // 59 = BIT 3,C	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(5A, BIT_3_D) {
 	BIT(3, D);
-	return 8;
 }  // 5A = BIT 3,D	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(5B, BIT_3_E) {
 	BIT(3, E);
-	return 8;
 }  // 5B = BIT 3,E	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(5C, BIT_3_H) {
 	BIT(3, H);
-	return 8;
 }  // 5C = BIT 3,H	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(5D, BIT_3_L) {
 	BIT(3, L);
-	return 8;
 }  // 5D = BIT 3,L	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(5E, BIT_3_(HL)) {
 	u8 r = cpu_read(HL);
 	BIT(3, r);
-	cpu_write(HL, r);
-	return 16;
-}  // 5E = BIT 3,(HL)	 | Fg: Z 0 1 - | Sz: 2 | Cc: 16
+}  // 5E = BIT 3,(HL)	 | Fg: Z 0 1 - | Sz: 2 | Cc: 12
 
 INST_H(5F, BIT_3_A) {
 	BIT(3, A);
-	return 8;
 }  // 5F = BIT 3,A	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(60, BIT_4_B) {
 	BIT(4, B);
-	return 8;
 }  // 60 = BIT 4,B	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(61, BIT_4_C) {
 	BIT(4, C);
-	return 8;
 }  // 61 = BIT 4,C	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(62, BIT_4_D) {
 	BIT(4, D);
-	return 8;
 }  // 62 = BIT 4,D	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(63, BIT_4_E) {
 	BIT(4, E);
-	return 8;
 }  // 63 = BIT 4,E	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(64, BIT_4_H) {
 	BIT(4, H);
-	return 8;
 }  // 64 = BIT 4,H	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(65, BIT_4_L) {
 	BIT(4, L);
-	return 8;
 }  // 65 = BIT 4,L	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(66, BIT_4_(HL)) {
 	u8 r = cpu_read(HL);
 	BIT(4, r);
-	cpu_write(HL, r);
-	return 16;
-}  // 66 = BIT 4,(HL)	 | Fg: Z 0 1 - | Sz: 2 | Cc: 16
+}  // 66 = BIT 4,(HL)	 | Fg: Z 0 1 - | Sz: 2 | Cc: 12
 
 INST_H(67, BIT_4_A) {
 	BIT(4, A);
-	return 8;
 }  // 67 = BIT 4,A	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(68, BIT_5_B) {
 	BIT(5, B);
-	return 8;
 }  // 68 = BIT 5,B	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(69, BIT_5_C) {
 	BIT(5, C);
-	return 8;
 }  // 69 = BIT 5,C	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(6A, BIT_5_D) {
 	BIT(5, D);
-	return 8;
 }  // 6A = BIT 5,D	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(6B, BIT_5_E) {
 	BIT(5, E);
-	return 8;
 }  // 6B = BIT 5,E	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(6C, BIT_5_H) {
 	BIT(5, H);
-	return 8;
 }  // 6C = BIT 5,H	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(6D, BIT_5_L) {
 	BIT(5, L);
-	return 8;
 }  // 6D = BIT 5,L	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(6E, BIT_5_(HL)) {
 	u8 r = cpu_read(HL);
 	BIT(5, r);
-	cpu_write(HL, r);
-	return 16;
-}  // 6E = BIT 5,(HL)	 | Fg: Z 0 1 - | Sz: 2 | Cc: 16
+}  // 6E = BIT 5,(HL)	 | Fg: Z 0 1 - | Sz: 2 | Cc: 12
 
 INST_H(6F, BIT_5_A) {
 	BIT(5, A);
-	return 8;
 }  // 6F = BIT 5,A	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(70, BIT_6_B) {
 	BIT(6, B);
-	return 8;
 }  // 70 = BIT 6,B	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(71, BIT_6_C) {
 	BIT(6, C);
-	return 8;
 }  // 71 = BIT 6,C	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(72, BIT_6_D) {
 	BIT(6, D);
-	return 8;
 }  // 72 = BIT 6,D	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(73, BIT_6_E) {
 	BIT(6, E);
-	return 8;
 }  // 73 = BIT 6,E	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(74, BIT_6_H) {
 	BIT(6, H);
-	return 8;
 }  // 74 = BIT 6,H	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(75, BIT_6_L) {
 	BIT(6, L);
-	return 8;
 }  // 75 = BIT 6,L	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(76, BIT_6_(HL)) {
 	u8 r = cpu_read(HL);
 	BIT(6, r);
-	cpu_write(HL, r);
-	return 16;
-}  // 76 = BIT 6,(HL)	 | Fg: Z 0 1 - | Sz: 2 | Cc: 16
+}  // 76 = BIT 6,(HL)	 | Fg: Z 0 1 - | Sz: 2 | Cc: 12
 
 INST_H(77, BIT_6_A) {
 	BIT(6, A);
-	return 8;
 }  // 77 = BIT 6,A	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(78, BIT_7_B) {
 	BIT(7, B);
-	return 8;
 }  // 78 = BIT 7,B	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(79, BIT_7_C) {
 	BIT(7, C);
-	return 8;
 }  // 79 = BIT 7,C	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(7A, BIT_7_D) {
 	BIT(7, D);
-	return 8;
 }  // 7A = BIT 7,D	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(7B, BIT_7_E) {
 	BIT(7, E);
-	return 8;
 }  // 7B = BIT 7,E	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(7C, BIT_7_H) {
 	BIT(7, H);
-	return 8;
 }  // 7C = BIT 7,H	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(7D, BIT_7_L) {
 	BIT(7, L);
-	return 8;
 }  // 7D = BIT 7,L	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(7E, BIT_7_(HL)) {
 	u8 r = cpu_read(HL);
 	BIT(7, r);
-	cpu_write(HL, r);
-	return 16;
-}  // 7E = BIT 7,(HL)	 | Fg: Z 0 1 - | Sz: 2 | Cc: 16
+}  // 7E = BIT 7,(HL)	 | Fg: Z 0 1 - | Sz: 2 | Cc: 12
 
 INST_H(7F, BIT_7_A) {
 	BIT(7, A);
-	return 8;
 }  // 7F = BIT 7,A	 | Fg: Z 0 1 - | Sz: 2 | Cc: 8
 
 INST_H(80, RES_0_B) {
 	RES(0, B);
-	return 8;
 }  // 80 = RES 0,B	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(81, RES_0_C) {
 	RES(0, C);
-	return 8;
 }  // 81 = RES 0,C	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(82, RES_0_D) {
 	RES(0, D);
-	return 8;
 }  // 82 = RES 0,D	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(83, RES_0_E) {
 	RES(0, E);
-	return 8;
 }  // 83 = RES 0,E	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(84, RES_0_H) {
 	RES(0, H);
-	return 8;
 }  // 84 = RES 0,H	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(85, RES_0_L) {
 	RES(0, L);
-	return 8;
 }  // 85 = RES 0,L	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(86, RES_0_(HL)) {
 	u8 r = cpu_read(HL);
 	RES(0, r);
 	cpu_write(HL, r);
-	return 16;
 }  // 86 = RES 0,(HL)	 | Fg: - - - - | Sz: 2 | Cc: 16
 
 INST_H(87, RES_0_A) {
 	RES(0, A);
-	return 8;
 }  // 87 = RES 0,A	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(88, RES_1_B) {
 	RES(1, B);
-	return 8;
 }  // 88 = RES 1,B	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(89, RES_1_C) {
 	RES(1, C);
-	return 8;
 }  // 89 = RES 1,C	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(8A, RES_1_D) {
 	RES(1, D);
-	return 8;
 }  // 8A = RES 1,D	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(8B, RES_1_E) {
 	RES(1, E);
-	return 8;
 }  // 8B = RES 1,E	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(8C, RES_1_H) {
 	RES(1, H);
-	return 8;
 }  // 8C = RES 1,H	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(8D, RES_1_L) {
 	RES(1, L);
-	return 8;
 }  // 8D = RES 1,L	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(8E, RES_1_(HL)) {
 	u8 r = cpu_read(HL);
 	RES(1, r);
 	cpu_write(HL, r);
-	return 16;
 }  // 8E = RES 1,(HL)	 | Fg: - - - - | Sz: 2 | Cc: 16
 
 INST_H(8F, RES_1_A) {
 	RES(1, A);
-	return 8;
 }  // 8F = RES 1,A	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(90, RES_2_B) {
 	RES(2, B);
-	return 8;
 }  // 90 = RES 2,B	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(91, RES_2_C) {
 	RES(2, C);
-	return 8;
 }  // 91 = RES 2,C	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(92, RES_2_D) {
 	RES(2, D);
-	return 8;
 }  // 92 = RES 2,D	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(93, RES_2_E) {
 	RES(2, E);
-	return 8;
 }  // 93 = RES 2,E	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(94, RES_2_H) {
 	RES(2, H);
-	return 8;
 }  // 94 = RES 2,H	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(95, RES_2_L) {
 	RES(2, L);
-	return 8;
 }  // 95 = RES 2,L	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(96, RES_2_(HL)) {
 	u8 r = cpu_read(HL);
 	RES(2, r);
 	cpu_write(HL, r);
-	return 16;
 }  // 96 = RES 2,(HL)	 | Fg: - - - - | Sz: 2 | Cc: 16
 
 INST_H(97, RES_2_A) {
 	RES(2, A);
-	return 8;
 }  // 97 = RES 2,A	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(98, RES_3_B) {
 	RES(3, B);
-	return 8;
 }  // 98 = RES 3,B	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(99, RES_3_C) {
 	RES(3, C);
-	return 8;
 }  // 99 = RES 3,C	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(9A, RES_3_D) {
 	RES(3, D);
-	return 8;
 }  // 9A = RES 3,D	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(9B, RES_3_E) {
 	RES(3, E);
-	return 8;
 }  // 9B = RES 3,E	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(9C, RES_3_H) {
 	RES(3, H);
-	return 8;
 }  // 9C = RES 3,H	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(9D, RES_3_L) {
 	RES(3, L);
-	return 8;
 }  // 9D = RES 3,L	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(9E, RES_3_(HL)) {
 	u8 r = cpu_read(HL);
 	RES(3, r);
 	cpu_write(HL, r);
-	return 16;
 }  // 9E = RES 3,(HL)	 | Fg: - - - - | Sz: 2 | Cc: 16
 
 INST_H(9F, RES_3_A) {
 	RES(3, A);
-	return 8;
 }  // 9F = RES 3,A	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(A0, RES_4_B) {
 	RES(4, B);
-	return 8;
 }  // A0 = RES 4,B	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(A1, RES_4_C) {
 	RES(4, C);
-	return 8;
 }  // A1 = RES 4,C	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(A2, RES_4_D) {
 	RES(4, D);
-	return 8;
 }  // A2 = RES 4,D	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(A3, RES_4_E) {
 	RES(4, E);
-	return 8;
 }  // A3 = RES 4,E	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(A4, RES_4_H) {
 	RES(4, H);
-	return 8;
 }  // A4 = RES 4,H	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(A5, RES_4_L) {
 	RES(4, L);
-	return 8;
 }  // A5 = RES 4,L	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(A6, RES_4_(HL)) {
 	u8 r = cpu_read(HL);
 	RES(4, r);
 	cpu_write(HL, r);
-	return 16;
 }  // A6 = RES 4,(HL)	 | Fg: - - - - | Sz: 2 | Cc: 16
 
 INST_H(A7, RES_4_A) {
 	RES(4, A);
-	return 8;
 }  // A7 = RES 4,A	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(A8, RES_5_B) {
 	RES(5, B);
-	return 8;
 }  // A8 = RES 5,B	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(A9, RES_5_C) {
 	RES(5, C);
-	return 8;
 }  // A9 = RES 5,C	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(AA, RES_5_D) {
 	RES(5, D);
-	return 8;
 }  // AA = RES 5,D	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(AB, RES_5_E) {
 	RES(5, E);
-	return 8;
 }  // AB = RES 5,E	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(AC, RES_5_H) {
 	RES(5, H);
-	return 8;
 }  // AC = RES 5,H	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(AD, RES_5_L) {
 	RES(5, L);
-	return 8;
 }  // AD = RES 5,L	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(AE, RES_5_(HL)) {
 	u8 r = cpu_read(HL);
 	RES(5, r);
 	cpu_write(HL, r);
-	return 16;
 }  // AE = RES 5,(HL)	 | Fg: - - - - | Sz: 2 | Cc: 16
 
 INST_H(AF, RES_5_A) {
 	RES(5, A);
-	return 8;
 }  // AF = RES 5,A	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(B0, RES_6_B) {
 	RES(6, B);
-	return 8;
 }  // B0 = RES 6,B	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(B1, RES_6_C) {
 	RES(6, C);
-	return 8;
 }  // B1 = RES 6,C	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(B2, RES_6_D) {
 	RES(6, D);
-	return 8;
 }  // B2 = RES 6,D	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(B3, RES_6_E) {
 	RES(6, E);
-	return 8;
 }  // B3 = RES 6,E	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(B4, RES_6_H) {
 	RES(6, H);
-	return 8;
 }  // B4 = RES 6,H	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(B5, RES_6_L) {
 	RES(6, L);
-	return 8;
 }  // B5 = RES 6,L	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(B6, RES_6_(HL)) {
 	u8 r = cpu_read(HL);
 	RES(6, r);
 	cpu_write(HL, r);
-	return 16;
 }  // B6 = RES 6,(HL)	 | Fg: - - - - | Sz: 2 | Cc: 16
 
 INST_H(B7, RES_6_A) {
 	RES(6, A);
-	return 8;
 }  // B7 = RES 6,A	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(B8, RES_7_B) {
 	RES(7, B);
-	return 8;
 }  // B8 = RES 7,B	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(B9, RES_7_C) {
 	RES(7, C);
-	return 8;
 }  // B9 = RES 7,C	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(BA, RES_7_D) {
 	RES(7, D);
-	return 8;
 }  // BA = RES 7,D	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(BB, RES_7_E) {
 	RES(7, E);
-	return 8;
 }  // BB = RES 7,E	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(BC, RES_7_H) {
 	RES(7, H);
-	return 8;
 }  // BC = RES 7,H	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(BD, RES_7_L) {
 	RES(7, L);
-	return 8;
 }  // BD = RES 7,L	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(BE, RES_7_(HL)) {
 	u8 r = cpu_read(HL);
 	RES(7, r);
 	cpu_write(HL, r);
-	return 16;
 }  // BE = RES 7,(HL)	 | Fg: - - - - | Sz: 2 | Cc: 16
 
 INST_H(BF, RES_7_A) {
 	RES(7, A);
-	return 8;
 }  // BF = RES 7,A	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(10, RL_B) {
 	RL(B);
-	return 8;
 }  // 10 = RL B	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(11, RL_C) {
 	RL(C);
-	return 8;
 }  // 11 = RL C	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(12, RL_D) {
 	RL(D);
-	return 8;
 }  // 12 = RL D	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(13, RL_E) {
 	RL(E);
-	return 8;
 }  // 13 = RL E	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(14, RL_H) {
 	RL(H);
-	return 8;
 }  // 14 = RL H	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(15, RL_L) {
 	RL(L);
-	return 8;
 }  // 15 = RL L	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(16, RL_(HL)) {
 	u8 r = cpu_read(HL);
 	RL(r);
 	cpu_write(HL, r);
-	return 16;
 }  // 16 = RL (HL)	 | Fg: Z 0 0 C | Sz: 2 | Cc: 16
 
 INST_H(17, RL_A) {
 	RL(A);
-	return 8;
 }  // 17 = RL A	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(00, RLC_B) {
 	RLC(B);
-	return 8;
 }  // 00 = RLC B	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(01, RLC_C) {
 	RLC(C);
-	return 8;
 }  // 01 = RLC C	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(02, RLC_D) {
 	RLC(D);
-	return 8;
 }  // 02 = RLC D	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(03, RLC_E) {
 	RLC(E);
-	return 8;
 }  // 03 = RLC E	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(04, RLC_H) {
 	RLC(H);
-	return 8;
 }  // 04 = RLC H	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(05, RLC_L) {
 	RLC(L);
-	return 8;
 }  // 05 = RLC L	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(06, RLC_(HL)) {
 	u8 r = cpu_read(HL);
 	RLC(r);
 	cpu_write(HL, r);
-	return 16;
 }  // 06 = RLC (HL)	 | Fg: Z 0 0 C | Sz: 2 | Cc: 16
 
 INST_H(07, RLC_A) {
 	RLC(A);
-	return 8;
 }  // 07 = RLC A	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(18, RR_B) {
 	RR(B);
-	return 8;
 }  // 18 = RR B	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(19, RR_C) {
 	RR(C);
-	return 8;
 }  // 19 = RR C	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(1A, RR_D) {
 	RR(D);
-	return 8;
 }  // 1A = RR D	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(1B, RR_E) {
 	RR(E);
-	return 8;
 }  // 1B = RR E	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(1C, RR_H) {
 	RR(H);
-	return 8;
 }  // 1C = RR H	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(1D, RR_L) {
 	RR(L);
-	return 8;
 }  // 1D = RR L	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(1E, RR_(HL)) {
 	u8 r = cpu_read(HL);
 	RR(r);
 	cpu_write(HL, r);
-	return 16;
 }  // 1E = RR (HL)	 | Fg: Z 0 0 C | Sz: 2 | Cc: 16
 
 INST_H(1F, RR_A) {
 	RR(A);
-	return 8;
 }  // 1F = RR A	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(08, RRC_B) {
 	RRC(B);
-	return 8;
 }  // 08 = RRC B	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(09, RRC_C) {
 	RRC(C);
-	return 8;
 }  // 09 = RRC C	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(0A, RRC_D) {
 	RRC(D);
-	return 8;
 }  // 0A = RRC D	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(0B, RRC_E) {
 	RRC(E);
-	return 8;
 }  // 0B = RRC E	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(0C, RRC_H) {
 	RRC(H);
-	return 8;
 }  // 0C = RRC H	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(0D, RRC_L) {
 	RRC(L);
-	return 8;
 }  // 0D = RRC L	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(0E, RRC_(HL)) {
 	u8 r = cpu_read(HL);
 	RRC(r);
 	cpu_write(HL, r);
-	return 16;
 }  // 0E = RRC (HL)	 | Fg: Z 0 0 C | Sz: 2 | Cc: 16
 
 INST_H(0F, RRC_A) {
 	RRC(A);
-	return 8;
 }  // 0F = RRC A	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(C0, SET_0_B) {
 	SET(0, B);
-	return 8;
 }  // C0 = SET 0,B	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(C1, SET_0_C) {
 	SET(0, C);
-	return 8;
 }  // C1 = SET 0,C	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(C2, SET_0_D) {
 	SET(0, D);
-	return 8;
 }  // C2 = SET 0,D	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(C3, SET_0_E) {
 	SET(0, E);
-	return 8;
 }  // C3 = SET 0,E	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(C4, SET_0_H) {
 	SET(0, H);
-	return 8;
 }  // C4 = SET 0,H	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(C5, SET_0_L) {
 	SET(0, L);
-	return 8;
 }  // C5 = SET 0,L	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(C6, SET_0_(HL)) {
 	u8 r = cpu_read(HL);
 	SET(0, r);
 	cpu_write(HL, r);
-	return 16;
 }  // C6 = SET 0,(HL)	 | Fg: - - - - | Sz: 2 | Cc: 16
 
 INST_H(C7, SET_0_A) {
 	SET(0, A);
-	return 8;
 }  // C7 = SET 0,A	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(C8, SET_1_B) {
 	SET(1, B);
-	return 8;
 }  // C8 = SET 1,B	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(C9, SET_1_C) {
 	SET(1, C);
-	return 8;
 }  // C9 = SET 1,C	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(CA, SET_1_D) {
 	SET(1, D);
-	return 8;
 }  // CA = SET 1,D	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(CB, SET_1_E) {
 	SET(1, E);
-	return 8;
 }  // CB = SET 1,E	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(CC, SET_1_H) {
 	SET(1, H);
-	return 8;
 }  // CC = SET 1,H	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(CD, SET_1_L) {
 	SET(1, L);
-	return 8;
 }  // CD = SET 1,L	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(CE, SET_1_(HL)) {
 	u8 r = cpu_read(HL);
 	SET(1, r);
 	cpu_write(HL, r);
-	return 16;
 }  // CE = SET 1,(HL)	 | Fg: - - - - | Sz: 2 | Cc: 16
 
 INST_H(CF, SET_1_A) {
 	SET(1, A);
-	return 8;
 }  // CF = SET 1,A	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(D0, SET_2_B) {
 	SET(2, B);
-	return 8;
 }  // D0 = SET 2,B	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(D1, SET_2_C) {
 	SET(2, C);
-	return 8;
 }  // D1 = SET 2,C	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(D2, SET_2_D) {
 	SET(2, D);
-	return 8;
 }  // D2 = SET 2,D	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(D3, SET_2_E) {
 	SET(2, E);
-	return 8;
 }  // D3 = SET 2,E	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(D4, SET_2_H) {
 	SET(2, H);
-	return 8;
 }  // D4 = SET 2,H	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(D5, SET_2_L) {
 	SET(2, L);
-	return 8;
 }  // D5 = SET 2,L	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(D6, SET_2_(HL)) {
 	u8 r = cpu_read(HL);
 	SET(2, r);
 	cpu_write(HL, r);
-	return 16;
 }  // D6 = SET 2,(HL)	 | Fg: - - - - | Sz: 2 | Cc: 16
 
 INST_H(D7, SET_2_A) {
 	SET(2, A);
-	return 8;
 }  // D7 = SET 2,A	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(D8, SET_3_B) {
 	SET(3, B);
-	return 8;
 }  // D8 = SET 3,B	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(D9, SET_3_C) {
 	SET(3, C);
-	return 8;
 }  // D9 = SET 3,C	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(DA, SET_3_D) {
 	SET(3, D);
-	return 8;
 }  // DA = SET 3,D	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(DB, SET_3_E) {
 	SET(3, E);
-	return 8;
 }  // DB = SET 3,E	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(DC, SET_3_H) {
 	SET(3, H);
-	return 8;
 }  // DC = SET 3,H	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(DD, SET_3_L) {
 	SET(3, L);
-	return 8;
 }  // DD = SET 3,L	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(DE, SET_3_(HL)) {
 	u8 r = cpu_read(HL);
 	SET(3, r);
 	cpu_write(HL, r);
-	return 16;
 }  // DE = SET 3,(HL)	 | Fg: - - - - | Sz: 2 | Cc: 16
 
 INST_H(DF, SET_3_A) {
 	SET(3, A);
-	return 8;
 }  // DF = SET 3,A	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(E0, SET_4_B) {
 	SET(4, B);
-	return 8;
 }  // E0 = SET 4,B	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(E1, SET_4_C) {
 	SET(4, C);
-	return 8;
 }  // E1 = SET 4,C	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(E2, SET_4_D) {
 	SET(4, D);
-	return 8;
 }  // E2 = SET 4,D	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(E3, SET_4_E) {
 	SET(4, E);
-	return 8;
 }  // E3 = SET 4,E	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(E4, SET_4_H) {
 	SET(4, H);
-	return 8;
 }  // E4 = SET 4,H	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(E5, SET_4_L) {
 	SET(4, L);
-	return 8;
 }  // E5 = SET 4,L	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(E6, SET_4_(HL)) {
 	u8 r = cpu_read(HL);
 	SET(4, r);
 	cpu_write(HL, r);
-	return 16;
 }  // E6 = SET 4,(HL)	 | Fg: - - - - | Sz: 2 | Cc: 16
 
 INST_H(E7, SET_4_A) {
 	SET(4, A);
-	return 8;
 }  // E7 = SET 4,A	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(E8, SET_5_B) {
 	SET(5, B);
-	return 8;
 }  // E8 = SET 5,B	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(E9, SET_5_C) {
 	SET(5, C);
-	return 8;
 }  // E9 = SET 5,C	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(EA, SET_5_D) {
 	SET(5, D);
-	return 8;
 }  // EA = SET 5,D	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(EB, SET_5_E) {
 	SET(5, E);
-	return 8;
 }  // EB = SET 5,E	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(EC, SET_5_H) {
 	SET(5, H);
-	return 8;
 }  // EC = SET 5,H	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(ED, SET_5_L) {
 	SET(5, L);
-	return 8;
 }  // ED = SET 5,L	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(EE, SET_5_(HL)) {
 	u8 r = cpu_read(HL);
 	SET(5, r);
 	cpu_write(HL, r);
-	return 16;
 }  // EE = SET 5,(HL)	 | Fg: - - - - | Sz: 2 | Cc: 16
 
 INST_H(EF, SET_5_A) {
 	SET(5, A);
-	return 8;
 }  // EF = SET 5,A	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(F0, SET_6_B) {
 	SET(6, B);
-	return 8;
 }  // F0 = SET 6,B	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(F1, SET_6_C) {
 	SET(6, C);
-	return 8;
 }  // F1 = SET 6,C	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(F2, SET_6_D) {
 	SET(6, D);
-	return 8;
 }  // F2 = SET 6,D	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(F3, SET_6_E) {
 	SET(6, E);
-	return 8;
 }  // F3 = SET 6,E	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(F4, SET_6_H) {
 	SET(6, H);
-	return 8;
 }  // F4 = SET 6,H	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(F5, SET_6_L) {
 	SET(6, L);
-	return 8;
 }  // F5 = SET 6,L	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(F6, SET_6_(HL)) {
 	u8 r = cpu_read(HL);
 	SET(6, r);
 	cpu_write(HL, r);
-	return 16;
 }  // F6 = SET 6,(HL)	 | Fg: - - - - | Sz: 2 | Cc: 16
 
 INST_H(F7, SET_6_A) {
 	SET(6, A);
-	return 8;
 }  // F7 = SET 6,A	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(F8, SET_7_B) {
 	SET(7, B);
-	return 8;
 }  // F8 = SET 7,B	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(F9, SET_7_C) {
 	SET(7, C);
-	return 8;
 }  // F9 = SET 7,C	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(FA, SET_7_D) {
 	SET(7, D);
-	return 8;
 }  // FA = SET 7,D	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(FB, SET_7_E) {
 	SET(7, E);
-	return 8;
 }  // FB = SET 7,E	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(FC, SET_7_H) {
 	SET(7, H);
-	return 8;
 }  // FC = SET 7,H	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(FD, SET_7_L) {
 	SET(7, L);
-	return 8;
 }  // FD = SET 7,L	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(FE, SET_7_(HL)) {
 	u8 r = cpu_read(HL);
 	SET(7, r);
 	cpu_write(HL, r);
-	return 16;
 }  // FE = SET 7,(HL)	 | Fg: - - - - | Sz: 2 | Cc: 16
 
 INST_H(FF, SET_7_A) {
 	SET(7, A);
-	return 8;
 }  // FF = SET 7,A	 | Fg: - - - - | Sz: 2 | Cc: 8
 
 INST_H(20, SLA_B) {
 	SLA(B);
-	return 8;
 }  // 20 = SLA B	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(21, SLA_C) {
 	SLA(C);
-	return 8;
 }  // 21 = SLA C	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(22, SLA_D) {
 	SLA(D);
-	return 8;
 }  // 22 = SLA D	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(23, SLA_E) {
 	SLA(E);
-	return 8;
 }  // 23 = SLA E	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(24, SLA_H) {
 	SLA(H);
-	return 8;
 }  // 24 = SLA H	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(25, SLA_L) {
 	SLA(L);
-	return 8;
 }  // 25 = SLA L	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(26, SLA_(HL)) {
 	u8 r = cpu_read(HL);
 	SLA(r);
 	cpu_write(HL, r);
-	return 16;
 }  // 26 = SLA (HL)	 | Fg: Z 0 0 C | Sz: 2 | Cc: 16
 
 INST_H(27, SLA_A) {
 	SLA(A);
-	return 8;
 }  // 27 = SLA A	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(28, SRA_B) {
 	SRA(B);
-	return 8;
 }  // 28 = SRA B	 | Fg: Z 0 0 0 | Sz: 2 | Cc: 8
 
 INST_H(29, SRA_C) {
 	SRA(C);
-	return 8;
 }  // 29 = SRA C	 | Fg: Z 0 0 0 | Sz: 2 | Cc: 8
 
 INST_H(2A, SRA_D) {
 	SRA(D);
-	return 8;
 }  // 2A = SRA D	 | Fg: Z 0 0 0 | Sz: 2 | Cc: 8
 
 INST_H(2B, SRA_E) {
 	SRA(E);
-	return 8;
 }  // 2B = SRA E	 | Fg: Z 0 0 0 | Sz: 2 | Cc: 8
 
 INST_H(2C, SRA_H) {
 	SRA(H);
-	return 8;
 }  // 2C = SRA H	 | Fg: Z 0 0 0 | Sz: 2 | Cc: 8
 
 INST_H(2D, SRA_L) {
 	SRA(L);
-	return 8;
 }  // 2D = SRA L	 | Fg: Z 0 0 0 | Sz: 2 | Cc: 8
 
 INST_H(2E, SRA_(HL)) {
 	u8 r = cpu_read(HL);
 	SRA(r);
 	cpu_write(HL, r);
-	return 16;
 }  // 2E = SRA (HL)	 | Fg: Z 0 0 0 | Sz: 2 | Cc: 16
 
 INST_H(2F, SRA_A) {
 	SRA(A);
-	return 8;
 }  // 2F = SRA A	 | Fg: Z 0 0 0 | Sz: 2 | Cc: 8
 
 INST_H(38, SRL_B) {
 	SRL(B);
-	return 8;
 }  // 38 = SRL B	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(39, SRL_C) {
 	SRL(C);
-	return 8;
 }  // 39 = SRL C	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(3A, SRL_D) {
 	SRL(D);
-	return 8;
 }  // 3A = SRL D	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(3B, SRL_E) {
 	SRL(E);
-	return 8;
 }  // 3B = SRL E	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(3C, SRL_H) {
 	SRL(H);
-	return 8;
 }  // 3C = SRL H	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(3D, SRL_L) {
 	SRL(L);
-	return 8;
 }  // 3D = SRL L	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(3E, SRL_(HL)) {
 	u8 r = cpu_read(HL);
 	SRL(r);
 	cpu_write(HL, r);
-	return 16;
 }  // 3E = SRL (HL)	 | Fg: Z 0 0 C | Sz: 2 | Cc: 16
 
 INST_H(3F, SRL_A) {
 	SRL(A);
-	return 8;
 }  // 3F = SRL A	 | Fg: Z 0 0 C | Sz: 2 | Cc: 8
 
 INST_H(30, SWAP_B) {
 	SWAP(B);
-	return 8;
 }  // 30 = SWAP B	 | Fg: Z 0 0 0 | Sz: 2 | Cc: 8
 
 INST_H(31, SWAP_C) {
 	SWAP(C);
-	return 8;
 }  // 31 = SWAP C	 | Fg: Z 0 0 0 | Sz: 2 | Cc: 8
 
 INST_H(32, SWAP_D) {
 	SWAP(D);
-	return 8;
 }  // 32 = SWAP D	 | Fg: Z 0 0 0 | Sz: 2 | Cc: 8
 
 INST_H(33, SWAP_E) {
 	SWAP(E);
-	return 8;
 }  // 33 = SWAP E	 | Fg: Z 0 0 0 | Sz: 2 | Cc: 8
 
 INST_H(34, SWAP_H) {
 	SWAP(H);
-	return 8;
 }  // 34 = SWAP H	 | Fg: Z 0 0 0 | Sz: 2 | Cc: 8
 
 INST_H(35, SWAP_L) {
 	SWAP(L);
-	return 8;
 }  // 35 = SWAP L	 | Fg: Z 0 0 0 | Sz: 2 | Cc: 8
 
 INST_H(36, SWAP_(HL)) {
 	u8 r = cpu_read(HL);
 	SWAP(r);
 	cpu_write(HL, r);
-	return 16;
 }  // 36 = SWAP (HL)	 | Fg: Z 0 0 0 | Sz: 2 | Cc: 16
 
 INST_H(37, SWAP_A) {
 	SWAP(A);
-	return 8;
 }  // 37 = SWAP A	 | Fg: Z 0 0 0 | Sz: 2 | Cc: 8
 
 #pragma endregion
