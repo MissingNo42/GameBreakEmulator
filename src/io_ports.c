@@ -256,15 +256,15 @@ void w46(u16 addr, u8 value) { // OAM DMA
 }
 
 void w47(u16 addr, u8 value) { // BGP
-	if (!GBC) ioBGP = value;
+	if (DMG_MODE) ioBGP = value;
 }
 
 void w48(u16 addr, u8 value) { // OBP0
-	if (!GBC) ioOBP0 = value & 0xFC;
+	if (DMG_MODE) ioOBP0 = value & 0xFC;
 }
 
 void w49(u16 addr, u8 value) { // OBP1
-	if (!GBC) ioOBP1 = value & 0xFC;
+	if (DMG_MODE) ioOBP1 = value & 0xFC;
 }
 
 void w4A(u16 addr, u8 value) { // WY
@@ -278,13 +278,13 @@ void w4B(u16 addr, u8 value) { // WX
 #define w4C dummy_write
 
 void w4D(u16 addr, u8 value) { // KEY1
-	if (GBC) ioKEY1 = (double_speed << 7) | (value & 1);
+	if (!DMG_MODE) ioKEY1 = (double_speed << 7) | (value & 1);
 }
 
 #define w4E dummy_write
 
 void w4F(u16 addr, u8 value) { // VBK
-	if (GBC) {
+	if (!DMG_MODE) {
 		ioVBK = value | 0xFE;
 		set_vram(value & 1);
 	}
@@ -295,34 +295,37 @@ void w50(u16 addr, u8 value) { // BOOTROM UNMAP
 		memoryMap.bootrom_unmapped = 1;
 		PC = 0x100;
 		load_cartridge();
-		INFO("BootRom Unmapping", "cartridge fallback at $0100\n");
+		
+		set_compatibility_mode();
+		
+		INFO("BootRom Unmapping", "CGB = %hhu | DMG Mode = %hhu\n", GBC, DMG_MODE);
 	}
 }
 
 void w51(u16 addr, u8 value) { // HDMA1
-	if (GBC) ioHDMA1 = value;
+	if (!DMG_MODE) ioHDMA1 = value;
 }
 
 void w52(u16 addr, u8 value) { // HDMA2
-	if (GBC) ioHDMA2 = value & 0xF0;
+	if (!DMG_MODE) ioHDMA2 = value & 0xF0;
 }
 
 void w53(u16 addr, u8 value) { // HDMA3
-	if (GBC) ioHDMA3 = (value & 0x1F) | 0x80;
+	if (!DMG_MODE) ioHDMA3 = (value & 0x1F) | 0x80;
 }
 
 void w54(u16 addr, u8 value) { // HDMA4
-	if (GBC) ioHDMA4 = value & 0xF0;
+	if (!DMG_MODE) ioHDMA4 = value & 0xF0;
 }
 
 void w55(u16 addr, u8 value) { // HDMA5
-	if (GBC) {
+	if (!DMG_MODE) {
 		hdma_start(value);
 	}
 }
 
 void w56(u16 addr, u8 value) {
-	if (GBC) ioRP = value;
+	if (!DMG_MODE) ioRP = value;
 }
 
 #define w57 dummy_write
@@ -344,29 +347,39 @@ void w56(u16 addr, u8 value) {
 #define w67 dummy_write
 
 void w68(u16 addr, u8 value) { // BCPS - BGPI
-	ioBCPS = value & 0xbf;
-	ioBCPD = memoryMap.cram[value & 0x3f];
+	if (!DMG_MODE) {
+		ioBCPS = value & 0xbf;
+		ioBCPD = memoryMap.cram[value & 0x3f];
+	}
 }
 
 void w69(u16 addr, u8 value) { // BCPD - BGPD
-	if (!memoryMap.ppu_ram_lock) ioBCPD = memoryMap.cram[ioBCPS & 0x3f] = value;
-	
-	if (ioBCPS & 0x80) w68(BCPS, ioBCPS + 1);
+	if (!DMG_MODE) {
+		if (ioBCPS & 1) value &= 0x7F; // Limits the 2nd byte value to 7 bits
+		if (!memoryMap.ppu_ram_lock) ioBCPD = memoryMap.cram[ioBCPS & 0x3f] = value;
+		
+		if (ioBCPS & 0x80) w68(BCPS, ioBCPS + 1);
+	}
 }
 
 void w6A(u16 addr, u8 value) { // 0CPS - OBPI
-	ioOCPS = value & 0xbf;
-	ioOCPD = memoryMap.cram[(value & 0x3f) | 0x40];
+	if (!DMG_MODE) {
+		ioOCPS = value & 0xbf;
+		ioOCPD = memoryMap.cram[(value & 0x3f) | 0x40];
+	}
 }
 
 void w6B(u16 addr, u8 value) { // OCPD - OBPD
-	if (!memoryMap.ppu_ram_lock) ioOCPD = memoryMap.cram[(ioOCPS & 0x3f) | 0x40] = value;
-	
-	if (ioOCPS & 0x80) w6A(OCPS, ioOCPS + 1);
+	if (!DMG_MODE) {
+		if (ioOCPS & 1) value &= 0x7F; // Limits the 2nd byte value to 7 bits
+		if (!memoryMap.ppu_ram_lock) ioOCPD = memoryMap.cram[(ioOCPS & 0x3f) | 0x40] = value;
+		
+		if (ioOCPS & 0x80) w6A(OCPS, ioOCPS + 1);
+	}
 }
 
 void w6C(u16 addr, u8 value) { // OPRI
-	if (GBC & !ioOPRI) ioOPRI = value & 1; // unused, locked
+	if (!DMG_MODE & !ioOPRI) ioOPRI = value & 1; // unused, locked
 }
 
 #define w6D dummy_write
@@ -374,7 +387,7 @@ void w6C(u16 addr, u8 value) { // OPRI
 #define w6F dummy_write
 
 void w70(u16 addr, u8 value) { // SVBK
-	if (GBC) {
+	if (!DMG_MODE) {
 		ioSVBK = value & 7;
 		u8 bk = ioSVBK ? ioSVBK : 1;
 		set_wram(bk);
