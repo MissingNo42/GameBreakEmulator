@@ -39,7 +39,7 @@ add_executable(GameBreakEmulator main.c src/units/mmu.c src/utils.c src/cartridg
         src/core.c
         src/units/ctrl.c
         src/units/apu.c
-        src/units/apu.h)
+        src/units/bios.c)
 
 
 INCLUDE(FindPkgConfig)
