@@ -7,13 +7,16 @@
 #include "mmu.h"
 #include "dma.h"
 
+
 PPU_Mem ppu_mem;
 Screen screen;
+
 
 static inline void mode_0_start();
 static inline void mode_1_start();
 static inline void mode_2_start();
 static inline void mode_3_start();
+
 
 #define set_mode_0() ioSTAT &= 0xFC                  // From mode (3)
 #define set_mode_1() ioSTAT = (ioSTAT & 0xFC) | 1    // From mode (0)
@@ -23,8 +26,26 @@ static inline void mode_3_start();
 #define check_lyc() ioSTAT = (ioSTAT & 0xFB) | ((ioLY == ioLYC) << 2)
 #define DOTS_SCANLINE 456
 
+
+RGBPixel GBC_Color[0x7FFF];
 const RGBPixel DMG_Color[] = {{.color = 0xFFFFFFFF}, {.color = 0xFFAAAAAA}, {.color = 0xFF555555}, {.color = 0xFF000000}};
 
+static inline void init_GBC_Color(){
+	static u8 X = 1;
+	if (X) {
+		X--;
+		for (u16f i = 0; !(i & 0x8000); i++) {
+			u16f u = i;//(i >> 8) | (i << 8);
+			u8 r = u & 0x1F;
+			GBC_Color[i].r = (r << 3) | (r >> 2);
+			r = (u >> 5) & 0x1F;
+			GBC_Color[i].g = (r << 3) | (r >> 2);
+			r = u >> 10;
+			GBC_Color[i].b = (r << 3) | (r >> 2);
+			GBC_Color[i].a = 0xFF;
+		}
+	}
+}
 
 void STAT_changed() {
 	// TODO STAT-BUG + stat_line go down between M2 & LYC
@@ -97,9 +118,9 @@ static inline u8 mode_0_step(u8 cycles) {
 static inline void mode_1_start() {
 	set_mode_1();
 	add_interrupt(INT_VBLANK); // Request VBLANK interrupt
+	//CRITICAL("VB", "%02X %02X\n", ioIF, read_ie());
 	ppu_mem.dots = DOTS_SCANLINE;
 	ppu_mem.frame_ready = 1;
-	//TODO Frame ready
 }
 
 static inline void mode_1_end() {
@@ -147,7 +168,7 @@ static inline void mode_2_start() {
 }
 
 static inline void mode_2_end() {
-	if (!GBC && ppu_mem.selected_num) { // sort by priority: X, OAM idx -> sort by X & keep OAM order for same X
+	if (DMG_MODE && ppu_mem.selected_num) { // sort by priority: X, OAM idx -> sort by X & keep OAM order for same X
 		for (u8 idx = ppu_mem.selected_num - 1; idx > 0; idx--) {
 			u8 maxX = ((ObjAttribute *)(memoryMap.oam + OAM))[ppu_mem.selected_obj[0]].X, max = 0;
 			for (u8 m = 1; m <= idx; m++)
@@ -213,15 +234,21 @@ static inline void get_tile(s32 X){
 	cX >>= 3; // pix coord -> tile coord
 	cY >>= 3; // pix coord -> tile coord
 	
-	ppu_mem.ctile_index = direct_read_vram(addr + cX + (cY << 5)); //(memoryMap.dma_lock) ? 0xFF:  -> LY0 blink due to bad mode3 timing
+	ppu_mem.ctile_index = direct_read_vram0(addr + cX + (cY << 5)); //(memoryMap.dma_lock) ? 0xFF:  -> LY0 blink due to bad mode3 timing
+	if (!DMG_MODE) ppu_mem.ctile_attr.attr = direct_read_vram1(addr + cX + (cY << 5));
 }
 
 static inline void load_tile_data(u16f addr) {
 	u16f addrh = addr | 1;
 	
-	for (u8f i = 0; i < 8; i++) {
-		ppu_mem.ctile_low[i] = direct_read_vram(addr | (i << 1));
-		ppu_mem.ctile_high[i] = direct_read_vram(addrh | (i << 1));
+	if (ppu_mem.ctile_attr.gbc_vram){ // Always 0 on DMG / DMG Comp.
+		for (u8f i = 0; i < 8; i++) {
+			ppu_mem.ctile_low[i] = direct_read_vram1(addr | (i << 1));
+			ppu_mem.ctile_high[i] = direct_read_vram1(addrh | (i << 1));
+		}
+	} else for (u8f i = 0; i < 8; i++) {
+		ppu_mem.ctile_low[i] = direct_read_vram0(addr | (i << 1));
+		ppu_mem.ctile_high[i] = direct_read_vram0(addrh | (i << 1));
 	}
 }
 
@@ -243,33 +270,40 @@ static inline void get_tile_data_obj(u8 tile){
 
 
 static inline void prerender_bg() {
-	s32 X = 0, Y = (ioLY + (ioSCY & 7)) & 7;
+	s32 X = 0, Y = (ioLY + (ioSCY & 7)) & 7, flipY;
 	
 	s32 bg_limit = (ppu_mem.wy_condition && ppu_mem.window_enable && (ioWX - 7 < 160)) ? ioWX - 7: 160;
 	
 	s32 offset = (ppu_mem.shifting ^ 7) + 1;
-	get_tile(0);
+	
+	start:
+	get_tile(X);
 	get_tile_data();
+	flipY = (ppu_mem.ctile_attr.v_flip) ? Y ^ 7: Y;
 	
 	loop: for (; X < bg_limit; X++) { // BG (first loop) | Window (second loop)
 		if (!offset) {
 			get_tile(X);
 			get_tile_data();
+			flipY = (ppu_mem.ctile_attr.v_flip) ? Y ^ 7: Y;
 			offset = 8;
 		}
 		
 		offset--;
-		ppu_mem.bg[X].color = (((ppu_mem.ctile_high[Y] >> offset) & 1) << 1) | ((ppu_mem.ctile_low[Y] >> offset) & 1);
+		s32 f_offset = (ppu_mem.ctile_attr.h_flip) ? offset ^ 7: offset;
+		ppu_mem.bg[X].color = (((ppu_mem.ctile_high[flipY] >> f_offset) & 1) << 1) | ((ppu_mem.ctile_low[flipY] >> f_offset) & 1);
+		ppu_mem.bg[X].bg_priority = ppu_mem.ctile_attr.bg_priority; // Ignored on DMG
+		ppu_mem.bg[X].palette = ppu_mem.ctile_attr.gbc_pal;         // Ignored on DMG
 	}
 	
 	if (X < 160) {
 		ppu_mem.window_visible = 1;
 		bg_limit = 160;
+		Y = ppu_mem.WLY & 7;
 		if (ioWX & 0xf8) offset = 0;
 		else {
 			offset = ioWX + 1;
-			get_tile(X);
-			get_tile_data();
+			goto start;
 		}
 		goto loop;
 	}
@@ -284,21 +318,22 @@ static inline void prerender_obj() {
 	for (s32 obj = ppu_mem.selected_num - 1; obj >= 0; obj--) { // Iter in reverse order to deal with priority more easily
 		ObjAttribute oa = read_oam_block_mode3(ppu_mem.selected_obj[obj]);
 		s32 Y = ioLY - oa.Y + 16;
+		ppu_mem.ctile_attr = oa.attr;
 		
-		if (oa.v_flip) Y ^= 0xF; // switch the to tiles
+		if (oa.attr.v_flip) Y ^= 0xF; // switch the to tiles
 		if (ioLCDC2) get_tile_data_obj((Y & 8) ? (oa.tile | 1): (oa.tile & 0xFE));
 		else get_tile_data_obj(oa.tile); // assume Y is valid (never > 8 / > 16)
 		Y &= 7;
 		
 		s32 X = oa.X - 8;
 		for (s32 offset = 0; !(offset & 8) && X < 160; X++, offset++) {
-			s32 f_offset = (oa.h_flip) ? offset : offset ^ 7;
+			s32 f_offset = (oa.attr.h_flip) ? offset : offset ^ 7;
 			s32 color = (((ppu_mem.ctile_high[Y] >> f_offset) & 1) << 1) | ((ppu_mem.ctile_low[Y] >> f_offset) & 1);
 			
 			if (color) { // color over priority-lower color OR color over alpha
-				ppu_mem.obj[X].bg_priority = oa.bg_priority;
+				ppu_mem.obj[X].bg_priority = oa.attr.bg_priority;
 				ppu_mem.obj[X].priority = oa.X;
-				ppu_mem.obj[X].palette = oa.dmg_pal;
+				ppu_mem.obj[X].palette = DMG_MODE ? oa.attr.dmg_pal: oa.attr.gbc_pal;
 				
 				ppu_mem.obj[X].color = color;
 			}
@@ -307,12 +342,36 @@ static inline void prerender_obj() {
 }
 
 static inline void render_blend() {
-	
-	for (s32 X = 0; X < 160; X++) {
-		if (ioLCDC0 && ((ppu_mem.obj[X].bg_priority && !ppu_mem.bg[X].color) || !ppu_mem.obj[X].color)) {
-			screen[ioLY][X] = DMG_Color[(ioBGP >> (ppu_mem.bg[X].color << 1)) & 3];
-		} else if (ioLCDC1) {
-			screen[ioLY][X] = DMG_Color[((ppu_mem.obj[X].palette ? ioOBP1: ioOBP0) >> (ppu_mem.obj[X].color << 1)) & 3];
+	if (GBC) {
+		if (DMG_MODE) // DMG Compat
+			for (s32 X = 0; X < 160; X++) {
+				if (ioLCDC0 && ((ppu_mem.obj[X].bg_priority && !ppu_mem.bg[X].color) || !ppu_mem.obj[X].color)) {
+					screen[ioLY][X] = GBC_Color[memoryMap.bg_color[0][(ioBGP >> (ppu_mem.bg[X].color << 1)) & 3]];
+				} else if (ioLCDC1) {
+					screen[ioLY][X] = GBC_Color[memoryMap.obj_color[ppu_mem.obj[X].palette][((ppu_mem.obj[X].palette ? ioOBP1 : ioOBP0) >> (ppu_mem.obj[X].color << 1)) & 3]];
+				}
+			}
+		else { // GBC
+			for (s32 X = 0; X < 160; X++) {
+				
+				if (!ioLCDC1                 // Obj disabled
+				    || !ppu_mem.obj[X].color // Alpha pixel
+				    || (ppu_mem.bg[X].color && ioLCDC0 &&
+				        (ppu_mem.bg[X].bg_priority || ppu_mem.obj[X].bg_priority)) // BG solid color (!=0) + BG priority
+					) {
+					screen[ioLY][X] = GBC_Color[memoryMap.bg_color[ppu_mem.bg[X].palette][ppu_mem.bg[X].color]];
+				} else if (ioLCDC1) {
+					screen[ioLY][X] = GBC_Color[memoryMap.obj_color[ppu_mem.obj[X].palette][ppu_mem.obj[X].color]];
+				}
+			}
+		}
+	} else { // DMG
+		for (s32 X = 0; X < 160; X++) {
+			if (ioLCDC0 && ((ppu_mem.obj[X].bg_priority && !ppu_mem.bg[X].color) || !ppu_mem.obj[X].color)) {
+				screen[ioLY][X] = DMG_Color[(ioBGP >> (ppu_mem.bg[X].color << 1)) & 3];
+			} else if (ioLCDC1) {
+				screen[ioLY][X] = DMG_Color[((ppu_mem.obj[X].palette ? ioOBP1 : ioOBP0) >> (ppu_mem.obj[X].color << 1)) & 3];
+			}
 		}
 	}
 }
@@ -324,6 +383,7 @@ static inline void mode_3_start() {
 	ppu_mem.loaded = 0;
 	ppu_mem.current_oam = 0;
 	ppu_mem.window_visible = 0;
+	ppu_mem.ctile_attr.attr = 0;
 	ppu_mem.window_enable = ioLCDC5 >> 5;
 	
 	prerender_bg();
@@ -360,6 +420,7 @@ static inline u8 mode_3_step(u8 cycles){ // 289-172
 // --------------------------------------------------------------
 
 void ppu_reset() {
+	init_GBC_Color();
 	for (u16 i = 0; i < (u16) sizeof(ppu_mem); i++) ((u8*)&ppu_mem)[i] = 0x00; //memset0
 	
 	if (ioLCDC7) {

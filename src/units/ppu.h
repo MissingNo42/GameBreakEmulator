@@ -21,20 +21,26 @@
 ////////////////////////    Types   ///////////////////////////
 
 #ifdef IS_LITTLE_ENDIAN
+Union {
+	struct {u8 gbc_pal: 3, gbc_vram: 1, dmg_pal: 1, h_flip: 1, v_flip: 1, bg_priority: 1;};
+	u8 attr;
+} TileAttribute;
+#else
+Union {
+	struct {u8 bg_priority: 1, v_flip: 1, h_flip: 1, dmg_pal: 1, gbc_vram: 1, gbc_pal: 2;};
+	u8 attr;
+} TileAttribute;
+#endif
+
+#ifdef IS_LITTLE_ENDIAN
 Struct {
 	u8 Y, X, tile;
-	union {
-		struct {u8 gbc_pal: 3, gbc_vram: 1, dmg_pal: 1, h_flip: 1, v_flip: 1, bg_priority: 1;};
-		u8 attr;
-	};
+	TileAttribute attr;
 } ObjAttribute;
 #else
 Struct {
-	u8 X, Y, tile;
-	union {
-		struct {u8 bg_priority: 1, v_flip: 1, h_flip: 1, dmg_pal: 1, gbc_vram: 1, gbc_pal: 2;};
-		u8 attr;
-	};
+	u8 Y, X, tile;
+	TileAttribute attr;
 } ObjAttribute;
 #endif
 
@@ -65,6 +71,7 @@ Struct {
 	WLY,                           // LY for the Window
 	ctile_index,
 	ctile_low[8], ctile_high[8];
+	TileAttribute ctile_attr;
 	
 	s16 dots;
 	u8 shifting: 3;
@@ -83,7 +90,8 @@ Struct {
 
 extern PPU_Mem ppu_mem;
 extern Screen screen;
-
+extern RGBPixel GBC_Color[0x7FFF];
+extern const RGBPixel DMG_Color[];
 
 ////////////////////////   Methods   //////////////////////////
 
