@@ -9,6 +9,7 @@
 
 #include "utils.h"
 #include "types.h"
+#include "units/bios.h"
 
 
 ////////////////////////    Types   ///////////////////////////
@@ -73,7 +74,6 @@ Struct {
 
 extern CartridgeHeader cartridgeHeader;
 extern CartridgeInfo cartridgeInfo;
-extern u8 GBC;
 
 extern const char * const OCODE[];
 extern const char * const NCODE[];
@@ -94,7 +94,7 @@ Reset(cartridge) {
 		for (u16 i = 0; i < (u16)sizeof(cartridgeHeader); i++) ((u8*)&cartridgeHeader)[i] = 0x00;
 		for (u16 i = 0; i < (u16)sizeof(cartridgeInfo); i++) ((u8*)&cartridgeInfo)[i] = 0x00;
 		load_header();
-	} // else nothing
+	}
 }
 
 SaveSize(cartridge, sizeof (cartridgeHeader) + sizeof (cartridgeInfo) )

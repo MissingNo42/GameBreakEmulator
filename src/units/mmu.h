@@ -11,6 +11,7 @@
 #include "../types.h"
 #include "../cartridge.h"
 #include "../mapper.h"
+#include "bios.h"
 
 
 ////////////////////////    Types   ///////////////////////////
@@ -30,11 +31,19 @@ Struct {
 	   * io,    // $ff00 - $ff7f
 	   * hram;  // $ff80 - $fffe + IE at $ffff
 	   //ie;    // $ffff - $ffff (not a ptr bc not needed)
+	   
+    u8 * vram0, * vram1; // GBC PPU
     u8 vram_bank: 1, wram_bank: 3; // GBC
 	u8 xram_bank: 4; // TODO verify :4
 	u8 rom0_bank, rom1_bank;
 	u32 map_size;
-    u8 cram[0x80]; // GBC
+	union {
+        u8 cram[0x80]; // GBC
+		struct {
+			u16 bg_color[8][4];
+			u16 obj_color[8][4];
+		};
+	};
 	u8 oam_lock: 1, vram_lock: 1;
 	u8 ppu_oam_lock: 1; // oam
 	u8 ppu_ram_lock: 1; // vram / cram
@@ -128,6 +137,8 @@ mmu_RWX(rom0, mapper.io.write_rom0(addr, value), memoryMap.mem_lock)
 mmu_RWX(rom1, mapper.io.write_rom1(addr, value), memoryMap.mem_lock)
 
 mmu_RW(vram,  memoryMap.vram_lock)
+mmu_RW(vram0,  memoryMap.vram_lock)
+mmu_RW(vram1,  memoryMap.vram_lock)
 mmu_RW(cram,  memoryMap.ppu_ram_lock) // addr is offset here
 mmu_RW(wram0, memoryMap.mem_lock)
 mmu_RW(wram1, memoryMap.mem_lock)
@@ -152,8 +163,6 @@ mmu_RXWX(xram, mapper.io.read_ram(addr), mapper.io.write_ram(addr, value), memor
 
 
 ////////////////////////   Methods   //////////////////////////
-
-void map_bootrom();
 
 u32 get_size();
 u8 * init_memory();
@@ -185,7 +194,7 @@ Reset(mmu) {
 	
 	init_memory();
 	
-	if (hard) map_bootrom();
+	if (hard) load_bootrom();
 }
 
 SaveSize(mmu, sizeof (memoryMap) + memoryMap.map_size)

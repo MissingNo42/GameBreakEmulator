@@ -13,7 +13,6 @@
 
 CartridgeHeader cartridgeHeader;
 CartridgeInfo cartridgeInfo;
-u8 GBC;
 static FILE * file;
 
 const char * const OCODE[] = {"None", "Nintendo", "-", "-", "-", "-", "-", "-", "Capcom", "Hot-B", "Jaleco", "Coconuts Japan", "Elite Systems", "-", "-", "-", "-", "-", "-", "EA (Electronic Arts)", "-", "-", "-", "-", "Hudsonsoft", "ITC Entertainment", "Yanoman", "-", "-", "Japan Clary", "-", "Virgin Interactive", "-", "-", "-", "-", "PCM Complete", "San-X", "-", "-", "Kotobuki Systems", "Seta", "-", "-", "-", "-", "-", "-", "Infogrames", "Nintendo", "Bandai", "See New Code", "Konami", "HectorSoft", "-", "-", "Capcom", "Banpresto", "-", "-", ".Entertainment i", "-", "Gremlin", "-", "-", "Ubisoft", "Atlus", "-", "Malibu", "-", "Angel", "Spectrum Holoby", "-", "Irem", "Virgin Interactive", "-", "-", "Malibu", "-", "U.S. Gold", "Absolute", "Acclaim", "Activision", "American Sammy", "GameTek", "Park Place", "LJN", "Matchbox", "-", "Milton Bradley", "Mindscape", "Romstar", "Naxat Soft", "Tradewest", "-", "-", "Titus", "Virgin Interactive", "-", "-", "-", "-", "-", "Ocean Interactive", "-", "EA (Electronic Arts)", "-", "-", "-", "-", "Elite Systems", "Electro Brain", "Infogrames", "Interplay", "Broderbund", "Sculptered Soft", "-", "The Sales Curve", "-", "-", "t.hq", "Accolade", "Triffix Entertainment", "-", "Microprose", "-", "-", "Kemco", "Misawa Entertainment", "-", "-", "Lozc", "-", "-", "Tokuma Shoten Intermedia", "-", "-", "-", "-", "Bullet-Proof Software", "Vic Tokai", "-", "Ape", "I’Max", "-", "Chunsoft Co.", "Video System", "Tsubaraya Productions Co.", "-", "Varie Corporation", "Yonezawa/S’Pal", "Kaneko", "-", "Arc", "Nihon Bussan", "Tecmo", "Imagineer", "Banpresto", "-", "Nova", "-", "Hori Electric", "Bandai", "-", "Konami", "-", "Kawada", "Takara", "-", "Technos Japan", "Broderbund", "-", "Toei Animation", "Toho", "-", "Namco", "acclaim", "ASCII or Nexsoft", "Bandai", "-", "Square Enix", "-", "HAL Laboratory", "SNK", "-", "Pony Canyon", "Culture Brain", "Sunsoft", "-", "Sony Imagesoft", "-", "Sammy", "Taito", "-", "Kemco", "Squaresoft", "Tokuma Shoten Intermedia", "Data East", "Tonkinhouse", "-", "Koei", "UFL", "Ultra", "Vap", "Use Corporation", "Meldac", ".Pony Canyon or", "Angel", "Taito", "Sofel", "Quest", "Sigma Enterprises", "ASK Kodansha Co.", "-", "Naxat Soft", "Copya System", "-", "Banpresto", "Tomy", "LJN", "-", "NCS", "Human", "Altron", "Jaleco", "Towa Chiki", "Yutaka", "Varie", "-", "Epcoh", "-", "Athena", "Asmik ACE Entertainment", "Natsume", "King Records", "Atlus", "Epic/Sony Records", "-", "IGS", "-", "A Wave", "-", "-", "Extreme Entertainment", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "LJN"};
@@ -79,9 +78,10 @@ u16 gchecksum(){
 
 void load_info(){
 	cartridgeInfo.type = CartridgeCapabilities[cartridgeHeader.type];
-	GBC = 0;//cartridgeHeader.gbc_flag >> 7;
 	cartridgeInfo.rom_size = 0x8000 << cartridgeHeader.rom_size;
 	cartridgeInfo.rom_bank = 2 << cartridgeHeader.rom_size;
+	
+	select_bios();
 	
 	switch (cartridgeHeader.ram_size) {
 		case 2: cartridgeInfo.ram_bank = 1; break;
