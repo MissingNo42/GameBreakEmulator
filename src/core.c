@@ -22,6 +22,7 @@ void emulator_start(const char * const fn) {
 	Reset_clock(1);
 	
 	Reset_cartridge(1);
+	Reset_bios(1);
 	Reset_mmu(1);
 	Reset_mapper(1);
 	
@@ -44,7 +45,28 @@ int emulator_loop(void * uns) {
 	u32 i = 0;
 	ControllerSync();
 	u8 m = 0, k = 0;
-	while(!isFrameReady() || !memoryMap.bootrom_unmapped ) {
+	
+	
+	
+	//static u8 kr[0x80];
+	//int shw = 0;
+	//for (int w = 0; w < 0x80; w++) {
+	//	if (memoryMap.cram[w] != kr[w]) {
+	//		shw = 1;
+	//	}
+	//	kr[w] = memoryMap.cram[w];
+	//}
+	//if (shw) {
+	//	ERROR("PAL BG ", " ");
+	//	for (int w = 0; w < 0x40; w++) printf("%02X ", memoryMap.cram[w]);
+	//	printf("\n");
+	//	ERROR("PAL OBJ", " ");
+	//	for (int w = 0x40; w < 0x80; w++) printf("%02X ", memoryMap.cram[w]);
+	//	CRITICAL("", "\n\n");
+	//}
+	
+	
+	while(!isFrameReady()){// || !memoryMap.bootrom_unmapped ) {
 		//if (memoryMap.bootrom_unmapped && !k) {
 		//	k++;
 		//	for (u8 j = 0; j < 0x80; j++) INFO("IO", "FF%02X = %02X\n", j, direct_read_io(IO|j));
@@ -67,17 +89,19 @@ int emulator_loop(void * uns) {
 			//	k=1;
 			//}
 			//LogInst();
-			//INFO("\t",
+		}
+			//CRITICAL("\t",
 			//      "%u \t A %02X | BC %04X | DE %04X | HL %04X | SP %04X | PC %04X [%c %c %c %c]  ( LY %hhu 0x%02X) <%02X %02X> (%02X %02X %02X %02X)\n",
 			//      i++, A, BC, DE, HL, SP, PC,
 			//      (z) ? 'Z' : 'z', (n) ? 'N' : 'n', (h) ? 'H' : 'h', (c) ? 'C' : 'c',
-			//      ioLY, ioLY, ioIF, read_ie(), ioDIV, ioTIMA, ioTMA, ioTAC);
+			//      ioLY, ioLY, ioIF, read_ie(), ioDIV, ioTIMA, ioTMA, ioLCDC);
 			//if (HL == 0xA100 || HL == 0xA101 || OPERAND == 0xA100 || OPERAND == 0xA101)
 			//	CRITICAL("BUG", "%04X %04X, (%04X %02X), %02X, %02X\n", HL, OPERAND, last_addr, last_value, direct_read(0xA100), direct_read(0xA101));
 			//if (!(i % 20)) CRITICAL("Wait...", "\n");
-		}
+		
 		cpu_run();
 	}
+	
 	ppu_mem.frame_ready = 0;
 	return 0;
 }
