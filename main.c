@@ -3,7 +3,7 @@
 //#include "src/core.h"
 
 #define FPS 120
-#define tr "../pj.gb"
+#define tr "../tloz.gb"
 //#define tr "../testrom/blargg/cpu_instrs/individual/02-interrupts.gb"
 
 //#define tr "../testrom/blargg/mem_timing/individual/01-read_timing.gb"
