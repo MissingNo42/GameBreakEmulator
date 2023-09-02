@@ -6,7 +6,7 @@
 
 SDL_Window * window = NULL;
 SDL_Renderer * renderer = NULL;
-SDL_Texture * LCD = NULL, * DebugMemory = NULL, * DebugTileMaps = NULL, * DebugTileData = NULL;
+SDL_Texture * LCD = NULL, * DebugMemory = NULL, * DebugTileMaps = NULL, * DebugAttrMaps = NULL, * DebugTileData = NULL;
 
 
 
@@ -25,10 +25,11 @@ s32 GfxSetup() {
 			SDL_SetWindowTitle(window, "GBC - Emulator");
 			LCD           = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 160, 144);
 			DebugTileMaps = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 256, 512);
-			DebugTileData = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 256, 384);
+			DebugAttrMaps = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 256, 512);
+			DebugTileData = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 256, 192);
 			DebugMemory   = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 256, 226);
 			
-			if (!LCD || !DebugMemory || !DebugTileMaps || !DebugTileData) {
+			if (!LCD || !DebugMemory || !DebugTileMaps || !DebugAttrMaps || !DebugTileData) {
 				CRITICAL("SDL Init texture failed", "%s\n", SDL_GetError());
 				GfxQuit();
 				return 0;
@@ -44,6 +45,7 @@ s32 GfxSetup() {
 void GfxQuit() {
 	if (LCD) SDL_DestroyTexture(LCD);
 	if (DebugTileMaps) SDL_DestroyTexture(DebugTileMaps);
+	if (DebugAttrMaps) SDL_DestroyTexture(DebugAttrMaps);
 	if (DebugTileData) SDL_DestroyTexture(DebugTileData);
 	if (DebugMemory) SDL_DestroyTexture(DebugMemory);
 	if (window) SDL_DestroyWindow(window);
@@ -124,19 +126,27 @@ void GfxRender_Memory() {
 
 void GfxRender_VRAM() {
 	s32 i, x = 0, y = 0;
-	SDL_Color gcl[4] = {{0xff, 0xff, 0xff, 0}, {0x90, 0x90, 0x90, 0}, {0x40, 0x40, 0x40, 0}, {0x10, 0x10, 0x10, 0}};
+	SDL_Color gcl[4] = {{0x10, 0x10, 0x10, 0},
+						{0x40, 0x40, 0x40, 0},
+						{0x90, 0x90, 0x90, 0},
+						{0xff, 0xff, 0xff, 0}};
 	SDL_Color * px;
 	int pitch;
+	
+	/////////////////////////////////
+	//////////// TILE ///////////////
+	/////////////////////////////////
+	
 	SDL_LockTexture(DebugTileMaps, NULL, (void **)&px, &pitch);
 	
 	for (i = 0x9800; i < 0x9FFF; i++, x += 8, y = x >> 8 << 3) {
-		u16 tile = direct_read_vram(i);
+		u16 tile = direct_read_vram0(i);
 		if (!ioLCDC4) tile = 0x80 + (tile ^ 0x80);
 		tile <<= 4;
 		
 		for (s32 yy = y; yy < y + 8; yy++) {
-			u8 cA = direct_read_vram(0x8000 + tile + ((yy - y) << 1));
-			u8 cB = direct_read_vram(0x8001 + tile + ((yy - y) << 1));
+			u8 cA = direct_read_vram0(0x8000 + tile + ((yy - y) << 1));
+			u8 cB = direct_read_vram0(0x8001 + tile + ((yy - y) << 1));
 			for (s32 xx = x & 0xff; xx < (x & 0xff) + 8; xx++) {
 				px[(yy << 8) + xx] = gcl[((cB >> (7 - xx + x) & 1) << 1) | (cA >> (7 - xx + x) & 1)];
 			}
@@ -144,12 +154,44 @@ void GfxRender_VRAM() {
 		
 	}
 	
-	
 	SDL_UnlockTexture(DebugTileMaps);
 	
 	SDL_Rect  rc = {512, 0, 256, 512};
 	SDL_RenderCopy(renderer, DebugTileMaps, NULL, &rc);
 	
+	/////////////////////////////////
+	//////////// ATTR ///////////////
+	/////////////////////////////////
+	
+	if (GBC) {
+		x = 0, y = 0;
+		SDL_LockTexture(DebugAttrMaps, NULL, (void **) &px, &pitch);
+		
+		for (i = 0x9800; i < 0x9FFF; i++, x += 8, y = x >> 8 << 3) {
+			u16 tile = direct_read_vram1(i);
+			TileAttribute attr;
+			attr.attr = tile;
+			if (!ioLCDC4) tile = 0x80 + (tile ^ 0x80);
+			tile <<= 4;
+			for (s32 yy = y; yy < y + 8; yy++) {
+				u8 cA = direct_read_vram1(0x8000 + tile + ((yy - y) << 1));
+				u8 cB = direct_read_vram1(0x8001 + tile + ((yy - y) << 1));
+				for (s32 xx = x & 0xff; xx < (x & 0xff) + 8; xx++) {
+					px[(yy << 8) + xx] = *(SDL_Color *)&GBC_Color[memoryMap.bg_color[attr.gbc_pal][((cB >> (7 - xx + x) & 1) << 1) | (cA >> (7 - xx + x) & 1)]];
+				}
+			}
+			
+		}
+		
+		SDL_UnlockTexture(DebugAttrMaps);
+		
+		SDL_Rect ra = {768, 0, 256, 512};
+		SDL_RenderCopy(renderer, DebugAttrMaps, NULL, &ra);
+	}
+	
+	SDL_SetRenderDrawColor(renderer, 0, 0xb2, 0x7f, 0);
+	
+	SDL_RenderDrawLine(renderer, 768, 0, 768, 512);
 	
 	////////////////////////////////////////
 	////////////////////////////////////////
@@ -161,20 +203,39 @@ void GfxRender_VRAM() {
 		x &= 0xff;
 		
 		for (s32 yy = y; yy < y + 8; yy++) {
-			u8 cA = direct_read_vram(0x8000 + (tile<<4) + ((yy - y) << 1));
-			u8 cB = direct_read_vram(0x8001 + (tile<<4) + ((yy - y) << 1));
+			u8 cA = direct_read_vram0(0x8000 + (tile<<4) + ((yy - y) << 1));
+			u8 cB = direct_read_vram0(0x8001 + (tile<<4) + ((yy - y) << 1));
 			for (s32 xx = x; xx < x + 8; xx++) {
 				px[(yy << 8) + xx] = gcl[((cB >> (7 - xx + x) & 1) << 1) | (cA >> (7 - xx + x) & 1)];
 			}
 		}
-		
+	}
+	
+	if (GBC) {
+		x = 0, y = 0;
+		for (i = 0x0; i < 384; i++, x += 8, y += x >> 8 << 3) {
+			u16 tile = i;
+			x &= 0xff;
+	
+			for (s32 yy = y; yy < y + 8; yy++) {
+				u8 cA = direct_read_vram1(0x8000 + (tile << 4) + ((yy - y) << 1));
+				u8 cB = direct_read_vram1(0x8001 + (tile << 4) + ((yy - y) << 1));
+				for (s32 xx = x; xx < x + 8; xx++) {
+					px[((yy + 96) << 8) + xx] = gcl[((cB >> (7 - xx + x) & 1) << 1) | (cA >> (7 - xx + x) & 1)];
+				}
+			}
+		}
 	}
 	
 	
 	SDL_UnlockTexture(DebugTileData);
 	
-	SDL_Rect  rd = {768, 0, 256, 384};
+	SDL_Rect  rd = {256, 256, 256, 192};
 	SDL_RenderCopy(renderer, DebugTileData, NULL, &rd);
+	SDL_SetRenderDrawColor(renderer, 0, 0xb2, 0x7f, 0);
+	
+	SDL_RenderDrawLine(renderer, 256, 256+96, 512, 256+96);
+	
 	////////////////////////////////////////
 	////////////////////////////////////////
 	
@@ -195,7 +256,7 @@ void GfxRender_VRAM() {
 	if (ioLCDC1) for (u8 o = 0; o < 40; o++){
 		ObjAttribute oa = direct_read_oam_block(o);
 		SDL_Rect ob = {bg0.x + oa.X - 8, bg0.y + oa.Y - 16, 8, ioLCDC2 ? 16: 8};
-		if (oa.bg_priority) SDL_SetRenderDrawColor(renderer, 0, 0x80, 0x80, 0);
+		if (oa.attr.bg_priority) SDL_SetRenderDrawColor(renderer, 0, 0x80, 0x80, 0);
 		else SDL_SetRenderDrawColor(renderer, 0x80, 0, 0x80, 0);
 		SDL_RenderDrawRect(renderer, &ob);
 		
