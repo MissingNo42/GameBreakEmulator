@@ -123,6 +123,7 @@ void GfxRender_Memory() {
 	SDL_RenderCopy(renderer, DebugMemory, NULL, &rc);
 }
 
+static inline u32 min(u32 a, u32 b){ return (a < b) ? a: b; }
 
 void GfxRender_VRAM() {
 	s32 i, x = 0, y = 0;
@@ -174,8 +175,8 @@ void GfxRender_VRAM() {
 			if (!ioLCDC4) tile = 0x80 + (tile ^ 0x80);
 			tile <<= 4;
 			for (s32 yy = y; yy < y + 8; yy++) {
-				u8 cA = direct_read_vram1(0x8000 + tile + ((yy - y) << 1));
-				u8 cB = direct_read_vram1(0x8001 + tile + ((yy - y) << 1));
+				u8 cA = 15;
+				u8 cB = (yy < y + 4) ? 0: 255;
 				for (s32 xx = x & 0xff; xx < (x & 0xff) + 8; xx++) {
 					px[(yy << 8) + xx] = *(SDL_Color *)&GBC_Color[memoryMap.bg_color[attr.gbc_pal][((cB >> (7 - xx + x) & 1) << 1) | (cA >> (7 - xx + x) & 1)]];
 				}
@@ -239,23 +240,46 @@ void GfxRender_VRAM() {
 	////////////////////////////////////////
 	////////////////////////////////////////
 	
-	SDL_Rect  bg0 = {512 + ioSCX, (ioLCDC3 ? 512: 0) + ioSCY, 160, 144};
-	SDL_SetRenderDrawColor(renderer, 0xff, 0, 0, 0);
-	SDL_RenderDrawRect(renderer, &bg0);
-	if (bg0.x + bg0.w > 512 + 255) {
-		SDL_Rect  bg1 = {512, (ioLCDC3 ? 512: 0) + ioSCY, bg0.x + bg0.w - 512 - 255, 144};
-		SDL_RenderDrawRect(renderer, &bg1);
+	u8 wrapX = ioSCX + 160 >= 256;
+	u8 wrapY = ioSCY + 144 >= 256;
+	
+	SDL_Rect  bg0 = {ioSCX, ioSCY, wrapX ? 256 - ioSCX : 160, wrapY ? 256 - ioSCY : 144};
+	SDL_Rect  bg1 = {0, ioSCY, 160 - bg0.w, wrapY ? 256 - ioSCY : 144};         // X
+	SDL_Rect  bg2 = {ioSCX, 0, wrapX ? 256 - ioSCX : 160, 144 - (256 - ioSCY)}; // Y
+	SDL_Rect  bg3 = {0, 0, 160 - bg0.w, 144 - (256 - ioSCY)};                   // XY
+	
+	if (ioLCDC3) {
+		bg0.y += 256;
+		bg1.y += 256;
+		bg2.y += 256;
+		bg3.y += 256;
 	}
+	bg0.x += 512;
+	bg1.x += 512;
+	bg2.x += 512;
+	bg3.x += 512;
 	
-	SDL_RenderDrawLine(renderer, 512, 512, 512 + 256, 512);
+	SDL_SetRenderDrawColor(renderer, 0xff, 0, 0, 0);
 	
-	SDL_Rect  wd = {512, ioLCDC6 ? 512: 0, 160 - ioWX + 7, 144 - ioWY};
+	SDL_RenderDrawRect(renderer, &bg0);
+	if (wrapX) SDL_RenderDrawRect(renderer, &bg1);
+	if (wrapY) SDL_RenderDrawRect(renderer, &bg2);
+	if (wrapX && wrapY) SDL_RenderDrawRect(renderer, &bg3);
+	
+	SDL_RenderDrawLine(renderer, 512, 256, 512 + 256, 256);
+	
+	SDL_Rect  wd = {512, ioLCDC6 ? 256: 0, 160 - ioWX + 7, 144 - ioWY};
 	SDL_SetRenderDrawColor(renderer, 0x80, 0x80, 0, 0);
 	if (ioLCDC5) SDL_RenderDrawRect(renderer, &wd);
 	
 	if (ioLCDC1) for (u8 o = 0; o < 40; o++){
 		ObjAttribute oa = direct_read_oam_block(o);
-		SDL_Rect ob = {bg0.x + oa.X - 8, bg0.y + oa.Y - 16, 8, ioLCDC2 ? 16: 8};
+		int d = ioSCX + oa.X - 8;
+		wrapX = d >= 256 || d < 0;
+		d = ioSCY + oa.Y - 16;
+		wrapY = d >= 256 || d < 0;
+		SDL_Rect ref = wrapX ? (wrapY ? bg3:bg1): (wrapY? bg2:bg0);
+		SDL_Rect ob = {ref.x + oa.X - 8, ref.y + oa.Y - 16, 8, ioLCDC2 ? 16: 8};
 		if (oa.attr.bg_priority) SDL_SetRenderDrawColor(renderer, 0, 0x80, 0x80, 0);
 		else SDL_SetRenderDrawColor(renderer, 0x80, 0, 0x80, 0);
 		SDL_RenderDrawRect(renderer, &ob);
@@ -281,4 +305,11 @@ void GfxRender_VRAM() {
 			goto draw;
 		}*/
 	}
+	
+	static u8 fr = 10;
+	SDL_Rect lcd = {100, 256, fr, 10};
+	fr++;
+	if (fr > 10)fr=1;
+	SDL_SetRenderDrawColor(renderer, ioLCDC7 ? 0: 0xff, ioLCDC7 ? 0xff: 0, 0, 0);
+	SDL_RenderDrawRect(renderer, &lcd); // red = ppu off | green = ppu on
 }
