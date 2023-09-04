@@ -39,19 +39,19 @@ void w02(u16 addr, u8 value) {
 #define w03 dummy_write
 
 void w04(u16 addr, u8 value) { // DIV
-	clock.wdiv = ioDIV = 0x00;
+	timer.wdiv = ioDIV = 0x00;
 	// TODO reset
 }
 
 void w05(u16 addr, u8 value) { // TIMA
-	if (!clock.reset_tima_done) {
+	if (!timer.reset_tima_done) {
 		ioTIMA = value;
-		clock.reset_tima_rq = 0;
+		timer.reset_tima_rq = 0;
 	}
 }
 
 void w06(u16 addr, u8 value) { // TMA
-	if (clock.reset_tima_done) ioTIMA = value;
+	if (timer.reset_tima_done) ioTIMA = value;
 	ioTMA = value;
 }
 
@@ -218,7 +218,7 @@ void w40(u16 addr, u8 value) { // LCDC TODO
 			DEBUG("LCDC.7 Switch on", "\n");
 		}
 		else {
-			if (PPU_MODE == 1) DEBUG("LCDC.7 Switch off", "during VBLANK\n");
+			if (PPU_MODE == 1 || GBC) INFO("LCDC.7 Switch off", "during Mode %hhu\n", PPU_MODE);
 			else CRITICAL("LCDC.7 Switch off", "during Mode %hhu\n", PPU_MODE);
 		}
 		ppu_reset();
@@ -278,7 +278,7 @@ void w4B(u16 addr, u8 value) { // WX
 #define w4C dummy_write
 
 void w4D(u16 addr, u8 value) { // KEY1
-	if (!DMG_MODE) ioKEY1 = (double_speed << 7) | (value & 1);
+	if (!DMG_MODE) ioKEY1 = (double_speed << 7) | (value & 1) | 0x7E;
 }
 
 #define w4E dummy_write
@@ -303,19 +303,19 @@ void w50(u16 addr, u8 value) { // BOOTROM UNMAP
 }
 
 void w51(u16 addr, u8 value) { // HDMA1
-	if (!DMG_MODE) ioHDMA1 = value;
+	if (!DMG_MODE) hdma.src_high = value; // HDMAx always read as FF
 }
 
 void w52(u16 addr, u8 value) { // HDMA2
-	if (!DMG_MODE) ioHDMA2 = value & 0xF0;
+	if (!DMG_MODE) hdma.src_low = value & 0xF0;
 }
 
 void w53(u16 addr, u8 value) { // HDMA3
-	if (!DMG_MODE) ioHDMA3 = (value & 0x1F) | 0x80;
+	if (!DMG_MODE) hdma.dst_high = (value & 0x1F) | 0x80;
 }
 
 void w54(u16 addr, u8 value) { // HDMA4
-	if (!DMG_MODE) ioHDMA4 = value & 0xF0;
+	if (!DMG_MODE) hdma.dst_low = value & 0xF0;
 }
 
 void w55(u16 addr, u8 value) { // HDMA5
@@ -357,6 +357,8 @@ void w69(u16 addr, u8 value) { // BCPD - BGPD
 	if (!DMG_MODE) {
 		if (ioBCPS & 1) value &= 0x7F; // Limits the 2nd byte value to 7 bits
 		if (!memoryMap.ppu_ram_lock) ioBCPD = memoryMap.cram[ioBCPS & 0x3f] = value;
+		//else
+		//	CRITICAL("Write to locked CRAM", "$%02X = %02X (new = %02X)\n", ioBCPS & 0x3f, memoryMap.cram[ioBCPS & 0x3f], value);
 		
 		if (ioBCPS & 0x80) w68(BCPS, ioBCPS + 1);
 	}
@@ -373,6 +375,8 @@ void w6B(u16 addr, u8 value) { // OCPD - OBPD
 	if (!DMG_MODE) {
 		if (ioOCPS & 1) value &= 0x7F; // Limits the 2nd byte value to 7 bits
 		if (!memoryMap.ppu_ram_lock) ioOCPD = memoryMap.cram[(ioOCPS & 0x3f) | 0x40] = value;
+		//else
+		//	CRITICAL("Write to locked CRAM", "$%02X = %02X (new = %02X)\n", (ioOCPS & 0x3f) | 0x40, memoryMap.cram[(ioOCPS & 0x3f) | 0x40], value);
 		
 		if (ioOCPS & 0x80) w6A(OCPS, ioOCPS + 1);
 	}
@@ -388,8 +392,9 @@ void w6C(u16 addr, u8 value) { // OPRI
 
 void w70(u16 addr, u8 value) { // SVBK
 	if (!DMG_MODE) {
-		ioSVBK = value & 7;
-		u8 bk = ioSVBK ? ioSVBK : 1;
+		ioSVBK = value | 0xF8; // Set unused bits to 1
+		u8 bk = ioSVBK & 7;    // Get used bits
+		if (!bk) bk = 1; // Force bank 1 if 0 selected
 		set_wram(bk);
 	}
 }

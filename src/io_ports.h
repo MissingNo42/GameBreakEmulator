@@ -64,6 +64,7 @@ reg_WY	    , //0xFF4A
 reg_WX	    , //0xFF4B
 reg_FF4C    ,
 reg_KEY1	, //0xFF4D
+reg_FF4E    ,
 reg_VBK	    , //0xFF4F
 reg_FF50    ,
 reg_HDMA1	, //0xFF51
@@ -248,7 +249,8 @@ Reset(io_ports) {
 	ioSC = 0x7E;
 	ioTAC = 0xF8;
 	ioIF = 0xE0;
-	
+	ioKEY1 = 0x7E;
+	ioSVBK = 0xF9;
 	ioNR10 = 0x80;//TODO
 	
 	ioLCDC = 0x00;
@@ -256,7 +258,16 @@ Reset(io_ports) {
 	ioSCX = ioSCY = ioWY = ioWX = 0;
 	ioLY = 0;
 	ioLYC = 0;
-	
+}
+
+SaveSize(io_ports, sizeof (ioPorts))
+
+Save(io_ports){
+	save_obj(ioPorts);
+}
+
+Load(io_ports){
+	load_obj(ioPorts);
 }
 
 
