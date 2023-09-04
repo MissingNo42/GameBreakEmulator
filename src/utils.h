@@ -8,12 +8,14 @@
 
 ////////////////////////   Macros   ///////////////////////////
 
+#include "types.h"
+
 #define Reset(name) inline static void Reset_##name(u8 hard)
 #define SaveSize(name, size) inline u16 SaveSize_##name() { return size; }
-#define Save(name) inline void Save_##name()
-#define Load(name) inline void Load_##name()
-#define save_obj(obj) // sizeof(obj) | &obj
-#define load_obj(obj)
+#define Save(name) inline void Save_##name(void * fh)
+#define Load(name) inline void Load_##name(void * fh)
+#define save_obj(obj) save_state(fh, &(obj), sizeof(obj))
+#define load_obj(obj) load_state(fh, &(obj), sizeof(obj))
 
 #define SEGFAULT() *(char*)0 = 1;
 
@@ -29,6 +31,14 @@ typedef enum {
 
 
 ////////////////////////   Methods   //////////////////////////
+
+
+void ResetEmulator(char hard);
+void SaveState();
+void LoadState();
+
+void save_state(void * fh, void * buf, u32 size);
+void load_state(void * fh, void * buf, u32 size);
 
 void Log(ELOG type, char lock, const char * title, const char * str, ...);
 void LogInst();

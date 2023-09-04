@@ -9,13 +9,85 @@
 #include <time.h>
 #include <stdarg.h>
 #include "units/cpu.h"
-#include "mapper.h"
+#include "units/mappers/mapper.h"
 #include "io_ports.h"
 #include "units/ppu.h"
+#include "units/dma.h"
+#include "units/ctrl.h"
+#include "timer.h"
 
 
 
 ////////////////////////   Methods   //////////////////////////
+
+
+void ResetEmulator(char hard) {
+	INFO("Reset Emulator", "hard reset = %hhu\n", hard);
+	Reset_io_ports(hard);
+	Reset_cpu(hard);
+	Reset_ppu(hard);
+	Reset_dma(hard);
+	Reset_ctrl(hard);
+	Reset_timer(hard);
+	
+	Reset_cartridge(hard);
+	Reset_bios(hard);
+	Reset_mmu(hard);
+	Reset_mapper(hard);
+}
+
+
+void SaveState(){
+	FILE * fh = fopen("savestate.bin", "w");
+	INFO("Save State", "to %s\n", "savestate.bin");
+	
+	if (fh) {
+		Save_io_ports(fh);
+		Save_cpu(fh);
+		Save_ppu(fh);
+		Save_dma(fh);
+		Save_ctrl(fh);
+		Save_timer(fh);
+		Save_cartridge(fh);
+		Save_bios(fh);
+		Save_mmu(fh);
+		Save_mapper(fh);
+		fclose(fh);
+	} else
+		ERROR("Save State", "cannot create the save file\n");
+}
+
+
+void LoadState(){
+	FILE * fh = fopen("savestate.bin", "r");
+	INFO("Load State", "from %s\n", "savestate.bin");
+	
+	if (fh) {
+		Load_io_ports(fh);
+		Load_cpu(fh);
+		Load_ppu(fh);
+		Load_dma(fh);
+		Load_ctrl(fh);
+		Load_timer(fh);
+		Load_cartridge(fh);
+		Load_bios(fh);
+		Load_mmu(fh);
+		Load_mapper(fh);
+		fclose(fh);
+	} else
+		ERROR("Load State", "cannot open the save file\n");
+}
+
+
+void save_state(void * fh, void * buf, u32 size) {
+	fwrite(buf, size, 1, fh);
+}
+
+
+void load_state(void * fh, void * buf, u32 size) {
+	if (!fread(buf, size, 1, fh)) CRITICAL("Load State - Incomplete Data", "dst = %p of size = %u\n", buf, size);
+}
+
 
 void Log(ELOG type, char lock, const char * title, const char * str, ...){
 	time_t t = time(NULL);
