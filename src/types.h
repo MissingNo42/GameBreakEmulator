@@ -11,9 +11,13 @@
 
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 #define IS_LITTLE_ENDIAN 1
+#define Lstruct(...) struct {__VA_ARGS__};
+#define Bstruct(...)
 // TODO: check SP/PC/HL/Structs..
 #else
 #define IS_BIG_ENDIAN 1
+#define Lstruct(...)
+#define Bstruct(...) struct {__VA_ARGS__};
 #endif
 
 
