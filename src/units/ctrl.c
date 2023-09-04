@@ -16,10 +16,11 @@ void ControllerSync(){
 	
 	u8 old = ioP1;
 	ioP1 = (ioP1 & 0xF0) | (ActionBtn & DirectionBtn);
-	u8 G = old;
+	//u8 G = old;
 	old ^= ioP1;
 	
 	//INFO("C", "%01X %01X | %02X -> %02X : %d\n", ActionBtn, DirectionBtn, G, ioP1, (ioP1 & (old & 0xF)) != (old & 0xF));
-	if ((ioP1 & (old & 0xF)) != (old & 0xF)) add_interrupt(INT_JOYPAD); // Interrupt on change (high to low), even with selector change?
+	//if ((ioP1 & (old & 0xF)) != (old & 0xF)) add_interrupt(INT_JOYPAD); // Interrupt on change (high to low)
+	if ((ioP1 & 0xF) != 0xF && (old & 0xF) == 0xF) add_interrupt(INT_JOYPAD); // Interrupt on change (high to low)
 	
 }
