@@ -3,8 +3,8 @@
 //#include "src/core.h"
 
 #define FPS 120
-#define tr "../tloz.gb"
-//#define tr "../testrom/blargg/cpu_instrs/individual/02-interrupts.gb"
+#define tr "../pc.gbc"
+//#define tr "../testrom/blargg/halt_bug.gb"
 
 //#define tr "../testrom/blargg/mem_timing/individual/01-read_timing.gb"
 //#define tr "../testrom/mooneye-test-suite/acceptance/intr_timing.gb"
@@ -199,6 +199,10 @@ int main(int argc, char * argv[]) {
 							case SDLK_RIGHT: { ControllerReleaseRight(); break; }
 							case SDLK_UP:    { ControllerReleaseUp(); break; }
 							case SDLK_DOWN:  { ControllerReleaseDown(); break; }
+							case SDLK_w:  { SaveState(); break; }
+							case SDLK_x:  { LoadState(); break; }
+							case SDLK_c:  { ResetEmulator(0); break; }
+							case SDLK_v:  { ResetEmulator(1); break; }
 						}break;
 					}
 					
