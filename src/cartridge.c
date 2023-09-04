@@ -24,8 +24,8 @@ const CartridgeCapability CartridgeCapabilities[] = {
 		{1, 1, 0, 0, 0, 0}, // 02
 		{1, 1, 1, 0, 0, 0}, // 03
 		{0, 0, 0, 0, 0, 0}, // 04 --
-		{2, 0, 0, 0, 0, 0}, // 05
-		{2, 0, 1, 0, 0, 0}, // 06
+		{2, 1, 0, 0, 0, 0}, // 05 -> has_ram = 1 for emu purpose
+		{2, 1, 1, 0, 0, 0}, // 06 -> has_ram = 1 for emu purpose
 		{0, 0, 0, 0, 0, 0}, // 07 --
 		{0, 0, 0, 0, 0, 0}, // 08 - unknown
 		{0, 0, 0, 0, 0, 0}, // 09 - unknown
@@ -83,14 +83,24 @@ void load_info(){
 	
 	select_bios();
 	
-	switch (cartridgeHeader.ram_size) {
-		case 2: cartridgeInfo.ram_bank = 1; break;
-		case 3: cartridgeInfo.ram_bank = 4; break;
-		case 4: cartridgeInfo.ram_bank = 16; break;
-		case 5: cartridgeInfo.ram_bank = 8; break;
-		default: cartridgeInfo.ram_bank = 0; break;
+	if (cartridgeInfo.type.mapper == 2) {
+		cartridgeInfo.ram_bank = 1;
+		cartridgeInfo.ram_size = 0x100;
+	} else {
+		switch (cartridgeHeader.ram_size) {
+			case 2: cartridgeInfo.ram_bank = 1;
+				break;
+			case 3: cartridgeInfo.ram_bank = 4;
+				break;
+			case 4: cartridgeInfo.ram_bank = 16;
+				break;
+			case 5: cartridgeInfo.ram_bank = 8;
+				break;
+			default: cartridgeInfo.ram_bank = 0;
+				break;
+		}
+		cartridgeInfo.ram_size = cartridgeInfo.ram_bank << 13;
 	}
-	cartridgeInfo.ram_size = cartridgeInfo.ram_bank << 13;
 }
 
 u8 open_cartridge(const char * const fn) {
