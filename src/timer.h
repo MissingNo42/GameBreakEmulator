@@ -25,32 +25,32 @@ Struct {
 	u8 reset_tima_rq: 1;
 	u8 reset_tima_done: 1;
 	u8 reset_tima_delay: 2;    // = 3 default
-} Clock;
+} Timer;
 
-extern Clock clock;
+extern Timer timer;
 
 #define fed_detect(fed) ((fed) == 0x02)
 #define fed_set(fed, value) fed = ((fed) << 1) | (value)
 
 void clock_run(u8 cycles);
 
-Reset(clock) {
-	clock.wdiv = 0;
-	clock.snd_fed = 0;
-	clock.tma_fed = 0;
-	clock.reset_tima_rq = 0;
-	clock.reset_tima_done = 0;
-	clock.reset_tima_delay = 3;
+Reset(timer) {
+	timer.wdiv = 0;
+	timer.snd_fed = 0;
+	timer.tma_fed = 0;
+	timer.reset_tima_rq = 0;
+	timer.reset_tima_done = 0;
+	timer.reset_tima_delay = 3;
 }
 
-SaveSize(clock, sizeof(Clock))
+SaveSize(timer, sizeof(Timer))
 
-Save(clock) {
-	save_obj(clock);
+Save(timer) {
+	save_obj(timer);
 }
 
-Load(clock) {
-	load_obj(clock);
+Load(timer) {
+	load_obj(timer);
 }
 
 #endif //GBEMU_CLOCK_H

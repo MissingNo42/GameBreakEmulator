@@ -7,7 +7,7 @@
 
 const u16 divmask[] = {0x200, 0x8, 0x20, 0x80};
 
-Clock clock;
+Timer timer;
 
 void upd(u8 value, u8 tma) {
 	if (tma) ioTMA = value;
@@ -31,34 +31,34 @@ void upd(u8 value, u8 tma) {
 void clock_run2(u8 cycles) {
 	if (cycles != 4 && cycles != 8) CRITICAL("", "g\n");
 	do {
-		clock.wdiv++;
-		ioDIV = clock.div;
+		timer.wdiv++;
+		ioDIV = timer.div;
 		
-		fed_set(clock.snd_fed, (clock.div >> ((double_speed) ? 6 : 5)) & 1);
-		if (fed_detect(clock.snd_fed)) // TODO clock sound
+		fed_set(timer.snd_fed, (timer.div >> ((double_speed) ? 6 : 5)) & 1);
+		if (fed_detect(timer.snd_fed)) // TODO timer sound
 			(void)0;
 		
-		if (clock.reset_tima_done){
-			if (clock.reset_tima_delay--) {
-				clock.reset_tima_done = 0;
+		if (timer.reset_tima_done){
+			if (timer.reset_tima_delay--) {
+				timer.reset_tima_done = 0;
 			}
 		}
 		
 		
-		if (clock.reset_tima_rq){ // overflow reset delayed
-			if (clock.reset_tima_delay--) {
-				clock.reset_tima_rq = 0;
-				clock.reset_tima_done = 1;
+		if (timer.reset_tima_rq){ // overflow reset delayed
+			if (timer.reset_tima_delay--) {
+				timer.reset_tima_rq = 0;
+				timer.reset_tima_done = 1;
 				ioTIMA = ioTMA;
 				add_interrupt(INT_TIMER);
 			}
 		}
 		
-		fed_set(clock.tma_fed, (ioTAC & 4) &&      // TAC.Enable
-		       (clock.wdiv & divmask[ioTAC & 3])); // TAC.Freq
-		if (fed_detect(clock.tma_fed)) {
+		fed_set(timer.tma_fed, (ioTAC & 4) &&      // TAC.Enable
+		       (timer.wdiv & divmask[ioTAC & 3])); // TAC.Freq
+		if (fed_detect(timer.tma_fed)) {
 			ioTIMA++;
-			clock.reset_tima_rq = !ioTIMA;
+			timer.reset_tima_rq = !ioTIMA;
 		}
 	} while(--cycles);
 }
@@ -68,27 +68,27 @@ void clock_run(u8 cycles) {
 	if (cycles != 4 && cycles != 8) CRITICAL("", "g\n");
 	cycles >>= 2;
 	do {
-		clock.wdiv += 4;
-		ioDIV = clock.div;
+		timer.wdiv += 4;
+		ioDIV = timer.div;
 		
-		fed_set(clock.snd_fed, (clock.div >> ((double_speed) ? 6 : 5)) & 1); // rework for m-Cycle
-		if (fed_detect(clock.snd_fed)) // TODO clock sound
+		fed_set(timer.snd_fed, (timer.div >> ((double_speed) ? 6 : 5)) & 1); // rework for m-Cycle
+		if (fed_detect(timer.snd_fed)) // TODO timer sound
 			(void)0;
 		
-		if (clock.reset_tima_done) clock.reset_tima_done = 0;
+		if (timer.reset_tima_done) timer.reset_tima_done = 0;
 		
-		if (clock.reset_tima_rq){ // overflow reset delayed
-			clock.reset_tima_rq = 0;
-			clock.reset_tima_done = 1;
+		if (timer.reset_tima_rq){ // overflow reset delayed
+			timer.reset_tima_rq = 0;
+			timer.reset_tima_done = 1;
 			ioTIMA = ioTMA;
 			add_interrupt(INT_TIMER);
 		}
 		
-		fed_set(clock.tma_fed, (ioTAC & 4) &&      // TAC.Enable
-		       (clock.wdiv & divmask[ioTAC & 3])); // TAC.Freq
-		if (fed_detect(clock.tma_fed)) {
+		fed_set(timer.tma_fed, (ioTAC & 4) &&      // TAC.Enable
+		       (timer.wdiv & divmask[ioTAC & 3])); // TAC.Freq
+		if (fed_detect(timer.tma_fed)) {
 			ioTIMA++;
-			clock.reset_tima_rq = !ioTIMA; // Overflow
+			timer.reset_tima_rq = !ioTIMA; // Overflow
 		}
 	} while(--cycles);
 }
