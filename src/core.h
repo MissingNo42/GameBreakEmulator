@@ -12,7 +12,7 @@
 #include "units/dma.h"
 #include "units/mmu.h"
 #include "units/ctrl.h"
-#include "mapper.h"
+#include "units/mappers/mapper.h"
 #include "timer.h"
 #include "utils.h"
 

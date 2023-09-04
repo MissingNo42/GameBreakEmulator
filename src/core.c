@@ -14,17 +14,7 @@ void emulator_start(const char * const fn) {
 	
 	open_cartridge(fn);
 	
-	Reset_io_ports(1);
-	Reset_cpu(1);
-	Reset_ppu(1);
-	Reset_dma(1);
-	Reset_ctrl(1);
-	Reset_clock(1);
-	
-	Reset_cartridge(1);
-	Reset_bios(1);
-	Reset_mmu(1);
-	Reset_mapper(1);
+	ResetEmulator(1);
 	
 	INFO("rom:", " %p\n", memoryMap.rom0+ROM0);
 	INFO("vram:", " %p\n", memoryMap.vram+VRAM);
@@ -42,9 +32,11 @@ void emulator_start(const char * const fn) {
 u16 SPX=0;
 int emulator_loop(void * uns) {
 	(void)uns;
+	static u32 I = 0;
 	u32 i = 0;
 	ControllerSync();
-	u8 m = 0, k = 0;
+	u8 m = 0;
+	static u8 k = 0;
 	
 	
 	
@@ -67,13 +59,13 @@ int emulator_loop(void * uns) {
 	
 	
 	while(!isFrameReady()){// || !memoryMap.bootrom_unmapped ) {
-		//if (memoryMap.bootrom_unmapped && !k) {
-		//	k++;
-		//	for (u8 j = 0; j < 0x80; j++) INFO("IO", "FF%02X = %02X\n", j, direct_read_io(IO|j));
-		//	CRITICAL("", "A %02X | BC %04X | DE %04X | HL %04X | SP %04X | PC %04X [%c %c %c %c] %02X\n",
-		//	      A, BC, DE, HL, SP, PC,
-		//	      (z) ? 'Z' : 'z', (n) ? 'N' : 'n', (h) ? 'H' : 'h', (c) ? 'C' : 'c', read_ie());
-		//}
+		if (memoryMap.bootrom_unmapped && !k) {
+			k++;
+			//for (u8 j = 0; j < 0x80; j++) INFO("IO", "FF%02X = %02X\n", j, direct_read_io(IO|j));
+			//CRITICAL("", "A %02X | BC %04X | DE %04X | HL %04X | SP %04X | PC %04X [%c %c %c %c] %02X - %04X %02X\n",
+			//      A, BC, DE, HL, SP, PC,
+			//      (z) ? 'Z' : 'z', (n) ? 'N' : 'n', (h) ? 'H' : 'h', (c) ? 'C' : 'c', read_ie(), timer.wdiv, ioDIV);
+		}
 		//if (PC > 0x4250 && PC < 0x4270) CRITICAL("PC4", "\n");
 		//if (PC > 0xC250 && PC < 0xC270) CRITICAL("PCC", "\n");
 		//if (OPCODE == 0xCD) m++;
@@ -89,18 +81,21 @@ int emulator_loop(void * uns) {
 			//	k=1;
 			//}
 			//LogInst();
-		}
-			//CRITICAL("\t",
-			//      "%u \t A %02X | BC %04X | DE %04X | HL %04X | SP %04X | PC %04X [%c %c %c %c]  ( LY %hhu 0x%02X) <%02X %02X> (%02X %02X %02X %02X)\n",
-			//      i++, A, BC, DE, HL, SP, PC,
+			//INFO("\t",
+			//      "%u : %u \t A %02X | BC %04X | DE %04X | HL %04X | SP %04X | PC %04X [%c %c %c %c]  ( LY %hhu 0x%02X) <%02X %02X> (%02X %02X %02X %02X)\n",
+			//      I++, i++, A, BC, DE, HL, SP, PC,
 			//      (z) ? 'Z' : 'z', (n) ? 'N' : 'n', (h) ? 'H' : 'h', (c) ? 'C' : 'c',
 			//      ioLY, ioLY, ioIF, read_ie(), ioDIV, ioTIMA, ioTMA, ioLCDC);
 			//if (HL == 0xA100 || HL == 0xA101 || OPERAND == 0xA100 || OPERAND == 0xA101)
 			//	CRITICAL("BUG", "%04X %04X, (%04X %02X), %02X, %02X\n", HL, OPERAND, last_addr, last_value, direct_read(0xA100), direct_read(0xA101));
 			//if (!(i % 20)) CRITICAL("Wait...", "\n");
+			//DEBUG("PPU", "%02X %02X %02X %02X %02X\n", ioLCDC, ioSCX, ioSCY, ioWX, ioWY);
+		} else I = 0;
 		
 		cpu_run();
 	}
+	//INFO("PPU", "%02X %02X %02X %02X %02X\n", ioLCDC, ioSCX, ioSCY, ioWX, ioWY);
+	//if (memoryMap.bootrom_unmapped) CRITICAL("FRAME", "\n");
 	
 	ppu_mem.frame_ready = 0;
 	return 0;
