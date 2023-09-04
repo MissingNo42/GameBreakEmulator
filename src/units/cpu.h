@@ -43,7 +43,7 @@ Struct {
 		struct { u8 rO1, rO2; };
 	};
 	u8 rOPCODE;
-	u8 rIME: 1, rIME_DELAY: 2, rhalted: 1, rhalt_bug: 1, rdouble_speed: 1;
+	u8 rIME: 1, rIME_DELAY: 2, rhalted: 1, rhalt_bug: 1, rdouble_speed: 1, rstopped;
 } CPURegisters;
 #else
 Struct {
@@ -115,6 +115,7 @@ extern u16 PCX; // debug opc's PC
 #define IME Registers.rIME
 #define IME_DELAY Registers.rIME_DELAY
 #define halted Registers.rhalted
+#define stopped Registers.rstopped
 #define halt_bug Registers.rhalt_bug
 #define double_speed Registers.rdouble_speed
 

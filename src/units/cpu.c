@@ -45,7 +45,7 @@ static inline void hdma_sync() {
 }
 
 static inline void sync(u8 cycles) {
-	if (hdma.general) hdma_sync();
+	if (hdma.general && !stopped) hdma_sync();
 	else {
 		//if (memoryMap.bootrom_unmapped && ioTAC == 5)
 		//	INFO("TM", "%02X %02X %02X %02X\n", ioDIV, ioTIMA, ioTMA, ioTAC);
@@ -955,6 +955,7 @@ INST(F0, LDH_A_(A8)) {
 }  // F0 = LDH A,(a8)	 | Fg: - - - - | Sz: 2 | Cc: 12
 
 INST(00, NOP) {
+	//CRITICAL("NOP", "\n");
 }  // 00 = NOP	 | Fg: - - - - | Sz: 1 | Cc: 4
 
 INST(B0, OR_B) {
@@ -1183,12 +1184,17 @@ INST(37, SCF) {
 }  // 37 = SCF	 | Fg: - 0 0 1 | Sz: 1 | Cc: 4
 
 INST(10, STOP_0) {
+	stopped = 1;
+	if (O1) {
+		direct_write_io(LCDC, ioLCDC | 0x80);
+		CRITICAL("Corrupted Stop", "LCDC Switch On : %02X\n", ioLCDC);
+	}
 
 	if ((~ioJOYP) & 0x0F){ // Btn selected
 		if (ioIF & read_ie()) {
 		
 		} else {
-			PC++;
+			//PC++;
 			ERROR("STOP Instruction - HALT Mode entrance", "unimplemented\n");
 			halted = 1;
 		}
@@ -1200,23 +1206,26 @@ INST(10, STOP_0) {
 					// glitch
 				} else {
 					ch_speed:
+					for (u16 u = 0; u < 32768; u++) sync(4);
 					double_speed = !double_speed;
-					write_io(KEY1, 0);
-					// TODO: Reset DIV
+					direct_write_io(KEY1, 0);
+					direct_write_io(DIV, 0);
+					INFO("Speed Switch", "Double speed mode = %hhu\n", double_speed);
 				}
 			} else {
-				PC++;
+				//PC++;
 				ERROR("STOP Instruction - Special HALT Mode entrance", "unimplemented\n");
 				// halted = 1; ???
 				goto ch_speed;
 			}
 		} else {
-			if (!(ioIF & read_ie())) PC++;
+			//if (!(ioIF & read_ie())) PC++;
 			ERROR("STOP Instruction - STOP Mode entrance", "unimplemented\n");
 			// STOP Mode
-			// TODO: Reset DIV
+			direct_write_io(DIV, 0);
 		}
 	}
+	stopped = 0;
 
 	}  // 10 = STOP 0	 | Fg: - - - - | Sz: 1 | Cc: 4
 
@@ -2431,7 +2440,7 @@ static Instruction * HighInstructions[] = {
 
 static u8 OPSize[] = {
 	0, 2, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 1, 0, // 00
-	0, 2, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, // 10
+	1, 2, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, // 10
 	1, 2, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, // 20
 	1, 2, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, // 30
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 40
@@ -2497,6 +2506,9 @@ void cpu_init() {
 }
 
 void cpu_run() { // run 1 loop (>= 1 M-cycle)
+	
+	// ISR: Interrupt Service Routine
+	
 	u8 fflag = ioIF;
 	
 	u8 flag = fflag & read_ie();
@@ -2507,7 +2519,7 @@ void cpu_run() { // run 1 loop (>= 1 M-cycle)
 			PC++;
 		}
 		if (IME) {
-			sync(8);
+			sync(8); // TODO: depend on speed? (= always 8 cycles ppu?)
 			IME = 0;
 			
 			u8 log = 0;
@@ -2517,9 +2529,13 @@ void cpu_run() { // run 1 loop (>= 1 M-cycle)
 			
 			if (halt_bug) halt_bug = 0, PC--; // Push the HALT addr
 			PUSH16(PC);
-			PC = 0x40 | (log << 3); // INT Vec jump // TODO: delay 1 M-cycle
+			PCX = PC;
+			PC = 0x40 | (log << 3); // INT Vec jump
+			sync(4);
 		}
 	}
+	
+	// FETCH | EXECUTE
 	
 	u8 sz;
 	
