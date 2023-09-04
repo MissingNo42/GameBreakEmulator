@@ -7,8 +7,9 @@
 
 ////////////////////////  Includes  ///////////////////////////
 
-#include "types.h"
-#include "utils.h"
+#include "../../types.h"
+#include "../../utils.h"
+#include <time.h>
 
 
 ////////////////////////    Types   ///////////////////////////
@@ -30,6 +31,19 @@ Struct {
 	u8 mapped_ram: 1;
 } MBC1;
 
+Struct {
+	time_t date;      // Emu side date
+	time_t halt_date; // Emu side date
+	u8 S, M, Hr, DL;   // GB side date
+	union {
+		Lstruct(u8 day: 1, _: 5, halt: 1, of: 1;)
+		Bstruct(u8 of: 1, halt: 1, _: 5, day: 1;)
+		u8 DH;
+	};
+	u8 latch;
+} MBC3;
+
+
 Union {
 	struct {
 		u16 lrom_bank: 8;
@@ -46,18 +60,22 @@ Union {
 	u16 raw;
 } MBC5;
 
+
 Struct {
-	reader * read_ram;   // MBC3/5...
+	reader * read_ram;   // MBC2/3...
 	writer * write_ram;
 	writer * write_rom0;
-	writer * write_rom1; //  reader overriding not exist?
+	writer * write_rom1; // reader override exists? -> maybe no
 	void (* init)();
 } MapperIO;
 
+
 Union {
 	MBC1 mbc1;
+	MBC3 mbc3;
 	MBC5 mbc5;
 } MapperData;
+
 
 Struct {
 	MapperIO io;
