@@ -9,12 +9,6 @@
 #include "../io_ports.h"
 
 
-////////////////////////   Macros   ///////////////////////////
-
-#define HDMA_SRC ((ioHDMA1 << 8) | ioHDMA2)
-#define HDMA_DST ((ioHDMA3 << 8) | ioHDMA4)
-
-
 //////////////////////  Declarations  /////////////////////////
 
 u8 dma_progess;
@@ -44,13 +38,13 @@ void dma_run(u8 cycles) {
 
 void hdma_start(u8 value) {
 	if (hdma.hblank && ((value ^ 0x80) & 0x80)) { // cancel
-		ioHDMA5 |= 0x80;
+		ioHDMA5 = 0x80 | value;
 		hdma.hdma = 0;
 		DEBUG("HDMA Cancel", "HDMA5 = %02X\n", ioHDMA5);
 		
 	} else { // (re)start
-		DEBUG("HDMA Start", "src = $%04X | dst = $%04X | HDMA5 = %02X\n", HDMA_SRC, HDMA_DST, value);
-		if (HDMA_SRC & 0x8000 && (((HDMA_SRC & 0x4000) >> 1) == (HDMA_SRC & 0x2000))) ERROR("HDMA Out of Bound", "src = $%04X | dst = $%04X | HDMA5 = %02X\n", HDMA_SRC, HDMA_DST, value);
+		DEBUG("HDMA Start", "src = $%04X | dst = $%04X | HDMA5 = %02X\n", hdma.src, hdma.dst, value);
+		if (hdma.src & 0x8000 && (((hdma.src & 0x4000) >> 1) == (hdma.src & 0x2000))) CRITICAL("HDMA Out of Bound", "src = $%04X | dst = $%04X | HDMA5 = %02X\n", hdma.src, hdma.dst, value);
 		
 		hdma.hdma = 0; // (hdma.current_hblank = 0) -> prevent tranfer start mid HBlank
 		hdma.hblank = value >> 7;
@@ -62,10 +56,10 @@ void hdma_start(u8 value) {
 
 void hdma_run(u8 cycles) {
 	cycles >>= 1;
-	u16 src = HDMA_SRC + hdma.offset, dst = HDMA_DST + hdma.offset;
 	
 	do {
-		direct_write_vram(dst++, memory_read(src++));
+		//if(hdma.hblank)CRITICAL("COPY", "%04X to %04X (%02X)\n", hdma.src, hdma.dst, hdma.offset);
+		direct_write_vram(hdma.dst++, memory_read(hdma.src++));
 		hdma.offset++;
 	} while (--cycles && hdma.lo);
 	
@@ -75,10 +69,9 @@ void hdma_run(u8 cycles) {
 		
 		if (ioHDMA5 == 0xFF) {
 			end: hdma.hdma = 0;
-			ioHDMA1 = ioHDMA2 = ioHDMA3 = ioHDMA4 = 0xFF; // hdma reset?
 			DEBUG("HDMA End", "HDMA5 = %02X\n", ioHDMA5);
 		}
-		else if (dst & 0x2000) { // DST Overflow
+		else if (hdma.dst & 0x2000) { // DST Overflow
 			ioHDMA5 |= 0x80;     // Switch to Inactive, leave the left blocks num
 			goto end;
 		}

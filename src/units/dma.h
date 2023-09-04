@@ -19,19 +19,25 @@
 
 ////////////////////////    Types   ///////////////////////////
 
-#ifdef IS_LITTLE_ENDIAN
-Union {
-	struct { u16 lo: 4, progress: 7, _u0: 2, hblank: 1, general: 1, current_hblank: 1; };
-	struct { u16 offset: 11, _u1: 5; };
-	u16 hdma;
+Struct {
+	union {
+		Lstruct ( u16 lo: 4, progress: 7, _u0: 2, hblank: 1, general: 1, current_hblank: 1; )
+		Lstruct ( u16 offset: 11, _u1: 5; )
+		Bstruct ( u16 current_hblank: 1, general: 1, hblank: 1, _: 2, progress: 7, lo: 4; )
+		Bstruct ( u16 _u1: 5, offset: 11; )
+		u16 hdma;
+	};
+	union {
+		Lstruct(u8 src_low,  src_high;)
+		Bstruct(u8 src_high, src_low;)
+		u16 src;
+	};
+	union {
+		Lstruct(u8 dst_low,  dst_high;)
+		Bstruct(u8 dst_high, dst_low;)
+		u16 dst;
+	};
 } HDMA;
-#else
-Union {
-	struct { u16 current_hblank: 1, general: 1, hblank: 1, _: 2, progress: 7, lo: 4; };
-	struct { u16 _u1: 5, offset: 11; }
-	u16 hdma;
-} HDMA;
-#endif
 
 
 //////////////////////// Declarations ///////////////////////////
@@ -42,7 +48,7 @@ extern HDMA hdma;
 
 //////////////////////// Registrations ///////////////////////////
 
-Reset(dma) { dma_progess = 0, hdma.hdma = 0; }
+Reset(dma) { dma_progess = 0, hdma.hdma = hdma.src = hdma.dst = 0; }
 SaveSize(dma, sizeof(dma_progess) + sizeof(hdma))
 
 Save(dma) {
