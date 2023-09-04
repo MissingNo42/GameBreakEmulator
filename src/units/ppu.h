@@ -90,7 +90,7 @@ Struct {
 
 extern PPU_Mem ppu_mem;
 extern Screen screen;
-extern RGBPixel GBC_Color[0x7FFF];
+extern RGBPixel GBC_Color[0x8000];
 extern const RGBPixel DMG_Color[];
 
 ////////////////////////   Methods   //////////////////////////

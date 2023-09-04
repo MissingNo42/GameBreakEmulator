@@ -27,20 +27,20 @@ static inline void mode_3_start();
 #define DOTS_SCANLINE 456
 
 
-RGBPixel GBC_Color[0x7FFF];
+RGBPixel GBC_Color[0x8000];
 const RGBPixel DMG_Color[] = {{.color = 0xFFFFFFFF}, {.color = 0xFFAAAAAA}, {.color = 0xFF555555}, {.color = 0xFF000000}};
 
 static inline void init_GBC_Color(){
 	static u8 X = 1;
 	if (X) {
 		X--;
-		for (u16f i = 0; !(i & 0x8000); i++) {
-			u16f u = i;//(i >> 8) | (i << 8);
-			u8 r = u & 0x1F;
+		for (u16f i = 0; i < 0x8000; i++) {
+			//u16f u = i;//(i >> 8) | (i << 8);
+			u8 r = i & 0x1F;
 			GBC_Color[i].r = (r << 3) | (r >> 2);
-			r = (u >> 5) & 0x1F;
+			r = (i >> 5) & 0x1F;
 			GBC_Color[i].g = (r << 3) | (r >> 2);
-			r = u >> 10;
+			r = i >> 10;
 			GBC_Color[i].b = (r << 3) | (r >> 2);
 			GBC_Color[i].a = 0xFF;
 		}
