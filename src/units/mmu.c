@@ -114,7 +114,7 @@ inline u8 memory_read(u16 addr){
 						return (memoryMap.oam_lock) ? 0xFF: (addr & 0xF0) | (addr & 0xF0 >> 8); // GBC-E behavior
 					} else return read_oam(addr);
 				} else {
-					DEBUG("Read in Echo RAM", "$%04X\n", addr);
+					CRITICAL("Read in Echo RAM", "$%04X\n", addr);
 					addr &= 0xDFFF;
 					goto WR;
 				}
@@ -136,7 +136,7 @@ inline u8 direct_read(u16 addr){
 						return (memoryMap.oam_lock) ? 0xFF: (addr & 0xF0) | (addr & 0xF0 >> 8); // GBC-E behavior
 					} else return direct_read_oam(addr);
 				} else {
-					DEBUG("Read in Echo RAM", "$%04X\n", addr);
+					CRITICAL("Read in Echo RAM", "$%04X\n", addr);
 					addr &= 0xDFFF;
 					goto WR;
 				}
@@ -159,7 +159,7 @@ inline void write(u16 addr, u8 value){
 					} else if ((addr & 0x80) && (addr & 0x60)) ERROR("Write in Reserved RAM", "$%04X (%hhu | 0x%02X)\n", addr, value, value);
 					else write_oam(addr, value);
 				} else {
-					DEBUG("Write in Echo RAM", "$%04X (%hhu | 0x%02X)\n", addr, value, value);
+					CRITICAL("Write in Echo RAM", "$%04X (%hhu | 0x%02X)\n", addr, value, value);
 					addr &= 0xDFFF;
 					goto WR;
 				}
@@ -190,7 +190,7 @@ inline void direct_write(u16 addr, u8 value){
 					} else if ((addr & 0x80) && (addr & 0x60)) ERROR("Write in Reserved RAM", "$%04X (%hhu | 0x%02X)\n", addr, value, value);
 					else direct_write_oam(addr, value);
 				} else {
-					DEBUG("Write in Echo RAM", "$%04X (%hhu | 0x%02X)\n", addr, value, value);
+					CRITICAL("Write in Echo RAM", "$%04X (%hhu | 0x%02X)\n", addr, value, value);
 					addr &= 0xDFFF;
 					goto WR;
 				}

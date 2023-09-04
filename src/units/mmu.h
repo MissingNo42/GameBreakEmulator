@@ -10,7 +10,7 @@
 #include <stddef.h>
 #include "../types.h"
 #include "../cartridge.h"
-#include "../mapper.h"
+#include "mappers/mapper.h"
 #include "bios.h"
 
 
@@ -193,8 +193,7 @@ Reset(mmu) {
 	}
 	
 	init_memory();
-	
-	if (hard) load_bootrom();
+	load_bootrom();
 }
 
 SaveSize(mmu, sizeof (memoryMap) + memoryMap.map_size)
