@@ -4,9 +4,9 @@ project(GameBreakEmulator C)
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
-add_compile_options("-O1")
+#add_compile_options("-O1")
 #add_compile_options("-Os") #size
-#add_compile_options("-Ofast")
+add_compile_options("-Ofast")
 #add_compile_options("-flto") # link opti
 #add_compile_options("-ffast-math") # break ISO/IEEE
 
@@ -35,11 +35,21 @@ add_compile_options("-Wstack-usage=4194304") # debug
 #add_compile_options("--gc-sections")
 #add_compile_options("-print-gc-sections")
 
-add_executable(GameBreakEmulator main.c src/units/mmu.c src/utils.c src/cartridge.c src/mapper.c src/units/cpu.c src/units/ppu.c src/io_ports.c src/timer.c src/units/dma.c src/gfx/sdl.c
-        src/core.c
+add_executable(GameBreakEmulator main.c
+        src/gfx/sdl.c
+        src/units/mappers/mapper.c
+        src/units/cpu.c
+        src/units/ppu.c
+        src/units/mmu.c
+        src/units/dma.c
         src/units/ctrl.c
         src/units/apu.c
-        src/units/bios.c)
+        src/units/bios.c
+        src/io_ports.c
+        src/cartridge.c
+        src/utils.c
+        src/timer.c
+        src/core.c)
 
 
 INCLUDE(FindPkgConfig)
