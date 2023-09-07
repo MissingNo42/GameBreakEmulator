@@ -6,10 +6,13 @@ set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
 #add_compile_options("-O1")
 #add_compile_options("-Os") #size
-add_compile_options("-Ofast")
+add_compile_options("-O1")
 #add_compile_options("-flto") # link opti
 #add_compile_options("-ffast-math") # break ISO/IEEE
 
+#add_compile_options("-fsanitize=address,undefined") # debug
+#add_link_options("-fsanitize=address,undefined")
+add_compile_options("-g") # debug
 add_compile_options("-g3") # debug
 
 add_compile_options("-Wno-unknown-pragmas") # for pragma region
@@ -52,9 +55,11 @@ add_executable(GameBreakEmulator main.c
         src/core.c)
 
 
-INCLUDE(FindPkgConfig)
+#INCLUDE(FindPkgConfig)
 
-pkg_check_modules(SDL2 REQUIRED sdl2)
+#pkg_check_modules(SDL2 REQUIRED sdl2)
+
+find_package(SDL2 REQUIRED)
 
 include_directories(${SDL2_INCLUDE_DIRS})
 
