@@ -14,7 +14,7 @@
 
 extern SDL_Window * window;
 extern SDL_Renderer * renderer;
-extern SDL_Texture * LCD, * DebugMemory, * DebugTileMaps, * DebugAttrMaps, * DebugTileData;
+extern SDL_Texture * LCD, * DebugMemory, * DebugTileMaps, * DebugAttrMaps, *DebugColor, * DebugTileData;
 
 s32 GfxSetup();
 void GfxQuit();

@@ -6,7 +6,8 @@
 
 SDL_Window * window = NULL;
 SDL_Renderer * renderer = NULL;
-SDL_Texture * LCD = NULL, * DebugMemory = NULL, * DebugTileMaps = NULL, * DebugAttrMaps = NULL, * DebugTileData = NULL;
+SDL_Texture * LCD = NULL, * DebugMemory = NULL, * DebugTileMaps = NULL,
+* DebugAttrMaps = NULL, *DebugColor = NULL, * DebugTileData = NULL;
 
 
 
@@ -27,9 +28,10 @@ s32 GfxSetup() {
 			DebugTileMaps = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 256, 512);
 			DebugAttrMaps = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 256, 512);
 			DebugTileData = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 256, 192);
+			DebugColor    = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 64, 16);
 			DebugMemory   = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 256, 226);
 			
-			if (!LCD || !DebugMemory || !DebugTileMaps || !DebugAttrMaps || !DebugTileData) {
+			if (!LCD || !DebugMemory || !DebugTileMaps || !DebugAttrMaps || !DebugColor || !DebugTileData) {
 				CRITICAL("SDL Init texture failed", "%s\n", SDL_GetError());
 				GfxQuit();
 				return 0;
@@ -47,6 +49,7 @@ void GfxQuit() {
 	if (DebugTileMaps) SDL_DestroyTexture(DebugTileMaps);
 	if (DebugAttrMaps) SDL_DestroyTexture(DebugAttrMaps);
 	if (DebugTileData) SDL_DestroyTexture(DebugTileData);
+	if (DebugColor) SDL_DestroyTexture(DebugColor);
 	if (DebugMemory) SDL_DestroyTexture(DebugMemory);
 	if (window) SDL_DestroyWindow(window);
 	SDL_Quit();
@@ -312,4 +315,25 @@ void GfxRender_VRAM() {
 	if (fr > 10)fr=1;
 	SDL_SetRenderDrawColor(renderer, ioLCDC7 ? 0: 0xff, ioLCDC7 ? 0xff: 0, 0, 0);
 	SDL_RenderDrawRect(renderer, &lcd); // red = ppu off | green = ppu on
+	
+	
+	
+	SDL_LockTexture(DebugColor, NULL, (void **)&px, &pitch);
+	x = 0, y = 0;
+	for (i = 0x0; i < 16; i++, x += 8, y += x >> 6 << 3) {
+		x &= 0x3f;
+		
+		for (s32 yy = y; yy < y + 8; yy++) {
+			u8 cA = 0x0F;
+			u8 cB = (yy < y + 4) ? 0: 255;
+			for (s32 xx = x; xx < x + 8; xx++) {
+				px[(yy << 6) + xx] = *(SDL_Color *)&GBC_Color[memoryMap.color[i][((cB >> (7 - xx + x) & 1) << 1) | (cA >> (7 - xx + x) & 1)]];
+			}
+		}
+	}
+	
+	SDL_UnlockTexture(DebugColor);
+	
+	SDL_Rect  rv = {256, 256+192, 64, 16};
+	SDL_RenderCopy(renderer, DebugColor, NULL, &rv);
 }
