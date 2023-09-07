@@ -16,14 +16,15 @@ void emulator_start(const char * const fn) {
 	
 	ResetEmulator(1);
 	
-	INFO("rom:", " %p\n", memoryMap.rom0+ROM0);
-	INFO("vram:", " %p\n", memoryMap.vram+VRAM);
-	INFO("xram:", " %p\n", memoryMap.xram+XRAM);
-	INFO("wram0:", " %p\n", memoryMap.wram0+WRAM0);
-	INFO("wram1:", " %p\n", memoryMap.wram1+WRAM1);
-	INFO("oam:", " %p\n", memoryMap.oam+OAM);
-	INFO("io:", " %p\n", memoryMap.io+IO);
-	INFO("hram:", " %p\nenter:", memoryMap.hram+HRAM);
+	INFO("rom0:", " %p\n", memoryMap.rom0);//+ROM0);
+	INFO("rom1:", " %p\n", memoryMap.rom1);//+ROM0);
+	INFO("xram:", " %p\n", memoryMap.xram);//+XRAM);
+	INFO("vram:", " %p\n", memoryMap.vram);//+VRAM);
+	INFO("wram0:", " %p\n", memoryMap.wram0);//+WRAM0);
+	INFO("wram1:", " %p\n", memoryMap.wram1);//+WRAM1);
+	INFO("oam:", " %p\n", memoryMap.oam);//+OAM);
+	INFO("io:", " %p\n", memoryMap.io);//+IO);
+	INFO("hram:", " %p\nenter:", memoryMap.hram);//+HRAM);
 	//getchar();
 	INFO("GameBreak Start !", "\n");
 	
@@ -81,11 +82,11 @@ int emulator_loop(void * uns) {
 			//	k=1;
 			//}
 			//LogInst();
-			//INFO("\t",
-			//      "%u : %u \t A %02X | BC %04X | DE %04X | HL %04X | SP %04X | PC %04X [%c %c %c %c]  ( LY %hhu 0x%02X) <%02X %02X> (%02X %02X %02X %02X)\n",
+			//if (ioLY != ppu_mem.LYN || (ioLY >= 152 && ioLY <= 154)) ERROR("\t",
+			//      "%u : %u \t A %02X | BC %04X | DE %04X | HL %04X | SP %04X | PC %04X [%c %c %c %c]  ( LY %hhu 0x%02X) <%02X %02X> (%02X %02X %02X %02X) %hhu %hhu\n",
 			//      I++, i++, A, BC, DE, HL, SP, PC,
 			//      (z) ? 'Z' : 'z', (n) ? 'N' : 'n', (h) ? 'H' : 'h', (c) ? 'C' : 'c',
-			//      ioLY, ioLY, ioIF, read_ie(), ioDIV, ioTIMA, ioTMA, ioLCDC);
+			//      ioLY, ioLY, ioIF, read_ie(), ioDIV, ioTIMA, ioTMA, ioLCDC, ppu_mem.LYN, PPU_MODE);
 			//if (HL == 0xA100 || HL == 0xA101 || OPERAND == 0xA100 || OPERAND == 0xA101)
 			//	CRITICAL("BUG", "%04X %04X, (%04X %02X), %02X, %02X\n", HL, OPERAND, last_addr, last_value, direct_read(0xA100), direct_read(0xA101));
 			//if (!(i % 20)) CRITICAL("Wait...", "\n");
