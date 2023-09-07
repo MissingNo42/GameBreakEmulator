@@ -39,6 +39,7 @@ Struct {
 	u32 map_size;
 	union {
         u8 cram[0x80]; // GBC
+		u16 color[16][4];
 		struct {
 			u16 bg_color[8][4];
 			u16 obj_color[8][4];
