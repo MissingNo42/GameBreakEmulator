@@ -2531,6 +2531,7 @@ void cpu_run() { // run 1 loop (>= 1 M-cycle)
 			PUSH16(PC);
 			PCX = PC;
 			PC = 0x40 | (log << 3); // INT Vec jump
+			//CRITICAL("INT TO", "%02X from %04X\n", PC, PCX);
 			sync(4);
 		}
 	}

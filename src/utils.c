@@ -103,23 +103,46 @@ void Log(ELOG type, char lock, const char * title, const char * str, ...){
 	
 	if (lock) Lock();
 }
-
+FILE * f = NULL;
 void LogInst() { // Mesen2 [PC,h] [A,2h] [B,2h][C,2h] [D,2h][E,2h] [PS,4] [H,2h][L,2h] [SP,4h]
-	static u8 V = 0;
-	static FILE * f = NULL;
+	static u32 V = 0;
 	if (!f) f = fopen("gbn.txt", "w");
 	
-	fprintf(f, "%02X %02X %04X %04X %c%c%c%c %04X %04X (%04X %s [%02X %02X] %d %d <%d %d>)\n",
+	fprintf(f, "%02X %02X %04X %04X %c%c%c%c %04X %04X (%04X %s [%02X %02X] %d %d <%d %d: %02X(%d) %02X>)\n",
 			PC, A, BC, DE, (z) ? 'Z' : 'z', (n) ? 'N' : 'n', (h) ? 'H' : 'h', (c) ? 'C' : 'c', HL, SP, PCX, OPCODE == 0xCB ? OPName[0x100 | O1]: OPName[OPCODE],
-			OPCODE, OPERAND, mapper.data.mbc5.rom_bank, mapper.data.mbc5.ram_bank, ioLY, ppu_mem.dots);
-	V++;
-	if ((V&0x3f) == 0x20) {
-		fflush(f);
-	}
+			OPCODE, OPERAND, mapper.data.mbc5.rom_bank, mapper.data.mbc5.ram_bank, ioLY, ppu_mem.dots, ioSTAT, PPU_MODE, ioLCDC);
+	//V++;
+	//if (V == 20000) {
+	//	V = 0;
+	//	fflush(f);
+	//}
 }
 
 void Lock(){
 	static u32 lock = 0;
 	if (lock) lock--;
-	else if (getchar() != '\n') scanf("%u%*c", &lock);
+	else {
+		int x = getchar();
+		switch (x) {
+			case '\n': break;
+			case 'w': {
+				fclose(f);
+				f = fopen("gbn.txt", "a");
+				break;
+			}
+			case 'm': {
+				INFO("rom0:", " %p\n", memoryMap.rom0);
+				INFO("rom1:", " %p\n", memoryMap.rom1);
+				INFO("xram:", " %p\n", memoryMap.xram);
+				INFO("vram:", " %p\n", memoryMap.vram);
+				INFO("wram0:", " %p\n", memoryMap.wram0);
+				INFO("wram1:", " %p\n", memoryMap.wram1);
+				INFO("oam:", " %p\n", memoryMap.oam);
+				INFO("io:", " %p\n", memoryMap.io);
+				INFO("hram:", " %p\nenter:", memoryMap.hram);
+				break;
+			}
+			default: scanf("%u%*c", &lock);
+		}
+	}
 }
