@@ -92,6 +92,7 @@ static inline void mode_0_end() {
 	check_lyc();
 	if (ioLY == 144) mode_1_start();
 	else mode_2_start();
+	
 	STAT_changed();
 }
 
@@ -124,6 +125,7 @@ static inline void mode_1_start() {
 }
 
 static inline void mode_1_end() {
+	//ERROR("EEE", "%d\n", ioLY);
 	if (ioLY == 153) { // Mode 1 End
 		//ERROR("PPU Cycle 70224?: ", "%u %hhu\n", ccc, ioLY);
 		ioLY = 0;
@@ -135,6 +137,7 @@ static inline void mode_1_end() {
 		ppu_mem.dots = DOTS_SCANLINE;
 	}
 	check_lyc();
+	//ERROR("MMM", "%d\n", PPU_MODE);
 
 	STAT_changed();
 }
