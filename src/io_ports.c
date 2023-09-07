@@ -226,7 +226,7 @@ void w40(u16 addr, u8 value) { // LCDC TODO
 }
 
 void w41(u16 addr, u8 value) { // STAT
-	ioSTAT = (value & 0x78) | 0x80;
+	ioSTAT = (value & 0x78) | (ioSTAT & 0x87);
 	STAT_changed();
 }
 
