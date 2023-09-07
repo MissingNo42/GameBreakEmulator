@@ -35,6 +35,7 @@ static inline void update_mbc1_bank(){
 		if (mapper.data.mbc1.mapped_ram) set_rom1(1);
 		else set_rom1((mapper.data.mbc1.lrom_bank & mapper.data.mbc1.rom_mask & 0x60) | 1);
 	}
+	//ERROR("MBC", "%02X %02X %02X %d\n", memoryMap.rom0_bank, memoryMap.rom1_bank, memoryMap.xram_bank, memoryMap.xram_enable);
 }
 
 static inline void write_rom0_mbc1(u16 addr, u8 value){

@@ -11,8 +11,9 @@
 
 static inline void init_mbc3(){
 	memoryMap.xram_enable = 0;
-	mapper.data.mbc3.date = time(NULL);
-	mapper.data.mbc3.S = mapper.data.mbc3.M = mapper.data.mbc3.Hr = mapper.data.mbc3.DL = mapper.data.mbc3.DH = mapper.data.mbc3.latch = 0;
+	mapper.data.mbc3.halt_date = mapper.data.mbc3.date = time(NULL);
+	mapper.data.mbc3.S = mapper.data.mbc3.M = mapper.data.mbc3.Hr = mapper.data.mbc3.DL = mapper.data.mbc3.latch = 0;
+	mapper.data.mbc3.DH = 0xFF;
 }
 
 static inline void write_rom0_mbc3(u16 addr, u8 value){
@@ -27,7 +28,7 @@ static inline void write_rom0_mbc3(u16 addr, u8 value){
 	}
 }
 
-static inline void upd_timer_mbc3() {
+static inline void upd_timer_mbc3() { // latch clock data
 	time_t nd = mapper.data.mbc3.halt ? mapper.data.mbc3.halt_date: time(NULL);
 	time_t diff = nd - mapper.data.mbc3.date;
 	

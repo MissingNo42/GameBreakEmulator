@@ -3,7 +3,7 @@
 //#include "src/core.h"
 
 #define FPS 120
-#define tr "../pc.gbc"
+#define tr "../rom/pdx.gb"
 //#define tr "../testrom/blargg/halt_bug.gb"
 
 //#define tr "../testrom/blargg/mem_timing/individual/01-read_timing.gb"
@@ -282,7 +282,6 @@ int main(int argc, char * argv[]) {
 				}
 				debug_key = 0;
 			}*/
-			
 			
 			SDL_LockTexture(LCD, NULL, &px, &pitch);
 			
