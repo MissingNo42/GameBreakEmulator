@@ -74,7 +74,7 @@ int main00() {
 	
 	for (u16 i = XRAM; i <= XRAM+0x2000; i++) {
 		write(i, 42);
-		if (42!=read(i)) ERROR("Ram fault", "%04X %hhu\n", i, memory_read(i));
+		if (42!=read(i)) ERROR("Ram fault", "%04X %hhu\n", i, mmu_read(i));
 	}*/
 	
 	INFO("rom:", " %p\nenter:", memoryMap.rom0+ROM0);

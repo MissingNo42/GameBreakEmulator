@@ -162,7 +162,7 @@ u8 load_header() {
 			return 1;
 		}
 	} else
-		CRITICAL("Cannot memory_read header", "\n");
+		CRITICAL("Cannot mmu_read header", "\n");
 	return 0;
 }
 
@@ -182,7 +182,7 @@ u8 load_cartridge() {
 		if (c != cartridgeHeader.checksum) ERROR( "Invalid global checksum", "header: %04X / computed: %04X\n", cartridgeHeader.checksum, c);
 
 	} else
-		CRITICAL("Cannot (fully) memory_read the cartridge file", "\n");
+		CRITICAL("Cannot (fully) mmu_read the cartridge file", "\n");
 
 	return ok;
 }

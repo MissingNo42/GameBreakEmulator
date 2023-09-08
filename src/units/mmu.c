@@ -102,7 +102,7 @@ u8 * init_memory(){
 
 /// RW
 
-inline u8 memory_read(u16 addr){
+inline u8 mmu_read(u16 addr){
 	last_addr = addr;
 	if (addr & 0x8000) {
 		if (addr & 0x4000) {
@@ -145,7 +145,7 @@ inline u8 direct_read(u16 addr){
 	} else return             (addr & 0x4000) ? direct_read_rom1(addr):  direct_read_rom0(addr);  // ROM
 }
 
-inline void write(u16 addr, u8 value){
+inline void mmu_write(u16 addr, u8 value){
 	last_addr = addr;
 	last_value = value;
 	if (addr & 0x8000) {

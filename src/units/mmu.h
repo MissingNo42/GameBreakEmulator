@@ -171,8 +171,8 @@ u8 * alloc_memory();
 void map_memory();
 void free_memory();
 
-u8 memory_read(u16 addr);
-void write(u16 addr, u8 value);
+u8 mmu_read(u16 addr);
+void mmu_write(u16 addr, u8 value);
 
 u8 direct_read(u16 addr);
 void direct_write(u16 addr, u8 value);

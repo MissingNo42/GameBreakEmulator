@@ -24,7 +24,7 @@ typedef void Instruction();
 
 ////////////////////////   Macros   ///////////////////////////
 
-#define cpu_write(addr, value) write(addr, value); sync(4)
+#define cpu_write(addr, value) mmu_write(addr, value); sync(4)
 
 
 ////////////////////////   Methods   //////////////////////////
@@ -60,7 +60,7 @@ static inline void sync(u8 cycles) {
 }
 
 static inline u8 cpu_read(u16 addr) {
-	u8 r = memory_read(addr);
+	u8 r = mmu_read(addr);
 	sync(4);
 	return r;
 }

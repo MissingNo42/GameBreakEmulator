@@ -187,7 +187,7 @@ static inline void mode_2_end() {
 }
 
 static inline u8 mode_2_step(u8 cycles) {
-	//cycles >>= 1; // 1 oam memory_read = 2 cycles
+	//cycles >>= 1; // 1 oam mmu_read = 2 cycles
 	
 	u8 sz = ioLCDC2 ? 16 : 8;
 	u8 next = ppu_mem.current_oam + (cycles >> 1);
@@ -195,7 +195,7 @@ static inline u8 mode_2_step(u8 cycles) {
 	
 	if (next > 40) cycles_left = next - 40, next = 40;
 	
-	if (memoryMap.dma_lock) ppu_mem.current_oam = next; // dma -> memory_read FF -> nothing on-screen = selected
+	if (memoryMap.dma_lock) ppu_mem.current_oam = next; // dma -> mmu_read FF -> nothing on-screen = selected
 	
 	else for (; ppu_mem.current_oam < next && ppu_mem.selected_num < 10; ppu_mem.current_oam++) {
 		ObjAttribute oa = direct_read_oam_block(ppu_mem.current_oam);

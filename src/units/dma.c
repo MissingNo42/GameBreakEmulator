@@ -59,7 +59,7 @@ void hdma_run(u8 cycles) {
 	
 	do {
 		//if(hdma.hblank)CRITICAL("COPY", "%04X to %04X (%02X)\n", hdma.src, hdma.dst, hdma.offset);
-		direct_write_vram(hdma.dst++, memory_read(hdma.src++));
+		direct_write_vram(hdma.dst++, mmu_read(hdma.src++));
 		hdma.offset++;
 	} while (--cycles && hdma.lo);
 	
