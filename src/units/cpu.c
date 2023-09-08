@@ -2505,48 +2505,93 @@ void cpu_init() {
 	IME = halted = halt_bug = IME_DELAY = double_speed = 0;
 }
 
+void cpu_debug() {
+	static u32 I = 0;
+	u32 i = 0;
+	u8 m = 0;
+	static u8 k = 0;
+	// || !memoryMap.bootrom_unmapped ) {
+	if (memoryMap.bootrom_unmapped && !k) {
+		k++;
+		//for (u8 j = 0; j < 0x80; j++) INFO("IO", "FF%02X = %02X\n", j, direct_read_io(IO|j));
+		//CRITICAL("", "A %02X | BC %04X | DE %04X | HL %04X | SP %04X | PC %04X [%c %c %c %c] %02X - %04X %02X\n",
+		//      A, BC, DE, HL, SP, PC,
+		//      (z) ? 'Z' : 'z', (n) ? 'N' : 'n', (h) ? 'H' : 'h', (c) ? 'C' : 'c', read_ie(), timer.wdiv, ioDIV);
+	}
+	//if (PC > 0x4250 && PC < 0x4270) CRITICAL("PC4", "\n");
+	//if (PC > 0xC250 && PC < 0xC270) CRITICAL("PCC", "\n");
+	//if (OPCODE == 0xCD) m++;
+	//else if (m < 2) m = 0;
+	if (memoryMap.bootrom_unmapped) {
+		//if (!k) {
+		//	ioLY = 144;
+		//	ppu_mem.dots = 456 - 191;
+		//	k=1;
+		//}
+		//LogInst();
+		//if (ioLY != ppu_mem.LYN || (ioLY >= 152 && ioLY <= 154)) ERROR("\t",
+		//      "%u : %u \t A %02X | BC %04X | DE %04X | HL %04X | SP %04X | PC %04X [%c %c %c %c]  ( LY %hhu 0x%02X) <%02X %02X> (%02X %02X %02X %02X) %hhu %hhu\n",
+		//      I++, i++, A, BC, DE, HL, SP, PC,
+		//      (z) ? 'Z' : 'z', (n) ? 'N' : 'n', (h) ? 'H' : 'h', (c) ? 'C' : 'c',
+		//      ioLY, ioLY, ioIF, read_ie(), ioDIV, ioTIMA, ioTMA, ioLCDC, ppu_mem.LYN, PPU_MODE);
+		//if (HL == 0xA100 || HL == 0xA101 || OPERAND == 0xA100 || OPERAND == 0xA101)
+		//	CRITICAL("BUG", "%04X %04X, (%04X %02X), %02X, %02X\n", HL, OPERAND, last_addr, last_value, direct_read(0xA100), direct_read(0xA101));
+		//if (!(i % 20)) CRITICAL("Wait...", "\n");
+		//DEBUG("PPU", "%02X %02X %02X %02X %02X\n", ioLCDC, ioSCX, ioSCY, ioWX, ioWY);
+	} else I = 0;
+}
+
 void cpu_run() { // run 1 loop (>= 1 M-cycle)
 	
-	// ISR: Interrupt Service Routine
-	
-	u8 fflag = ioIF;
-	
-	u8 flag = fflag & read_ie();
-	// TODO: add halt_bug in RST
-	if (flag) {
-		if (halted) {
-			halted = 0;
-			PC++;
+	do {
+		// Debug
+		//cpu_debug();
+		
+		// ISR: Interrupt Service Routine
+		
+		u8 fflag = ioIF;
+		
+		u8 flag = fflag & read_ie();
+		// TODO: add halt_bug in RST
+		if (flag) {
+			if (halted) {
+				halted = 0;
+				PC++;
+			}
+			if (IME) {
+				sync(8); // TODO: depend on speed? (= always 8 cycles ppu?)
+				IME = 0;
+				
+				u8 log = 0;
+				while (!(flag & (1 << log))) log++;
+				
+				ioIF = (fflag & (~(1 << log))) | 0xe0;
+				
+				if (halt_bug) halt_bug = 0, PC--; // Push the HALT addr
+				PUSH16(PC);
+				PCX = PC;
+				PC = 0x40 | (log << 3); // INT Vec jump
+				//CRITICAL("INT TO", "%02X from %04X\n", PC, PCX);
+				sync(4);
+			}
 		}
-		if (IME) {
-			sync(8); // TODO: depend on speed? (= always 8 cycles ppu?)
-			IME = 0;
-			
-			u8 log = 0;
-			while (!(flag & (1 << log))) log++;
-			
-			ioIF = (fflag & (~(1 << log))) | 0xe0;
-			
-			if (halt_bug) halt_bug = 0, PC--; // Push the HALT addr
-			PUSH16(PC);
-			PCX = PC;
-			PC = 0x40 | (log << 3); // INT Vec jump
-			//CRITICAL("INT TO", "%02X from %04X\n", PC, PCX);
-			sync(4);
+		
+		// FETCH | EXECUTE
+		
+		u8 sz;
+		
+		if ((sz = OPSize[fetch_opcode()])) {
+			if (sz == 2) fetch_2operand();
+			else fetch_1operand();
 		}
-	}
+		
+		Instructions[OPCODE]();
+		
+		if (IME_DELAY & 1)
+			IME = 1; // assumes that EI, EI, ..., EI will take effect at the end of the 2nd, and not the last
+		IME_DELAY >>= 1;
+		
+	} while (!isFrameReady());
 	
-	// FETCH | EXECUTE
-	
-	u8 sz;
-	
-	if ((sz = OPSize[fetch_opcode()])) {
-		if (sz == 2) fetch_2operand();
-		else fetch_1operand();
-	}
-	
-	Instructions[OPCODE]();
-	
-	if (IME_DELAY & 1) IME = 1; // assumes that EI, EI, ..., EI will take effect at the end of the 2nd, and not the last
-	IME_DELAY >>= 1;
+	//ppu_mem.frame_ready = 0;
 }

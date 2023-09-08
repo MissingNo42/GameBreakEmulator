@@ -407,11 +407,18 @@ class i:
 
         elif s.n.startswith("STOP"):
             h += r"""
+	
+	stopped = 1;
+	if (O1) {
+		direct_write_io(LCDC, ioLCDC | 0x80);
+		CRITICAL("Corrupted Stop", "LCDC Switch On : %02X\n", ioLCDC);
+	}
+
 	if ((~ioJOYP) & 0x0F){ // Btn selected
 		if (ioIF & read_ie()) {
 		
 		} else {
-			PC++;
+			//PC++;
 			ERROR("STOP Instruction - HALT Mode entrance", "unimplemented\n");
 			halted = 1;
 		}
@@ -423,23 +430,26 @@ class i:
 					// glitch
 				} else {
 					ch_speed:
+					for (u16 u = 0; u < 32768; u++) sync(4);
 					double_speed = !double_speed;
-					write_io(KEY1, 0);
-					// TODO: Reset DIV
+					direct_write_io(KEY1, 0);
+					direct_write_io(DIV, 0);
+					INFO("Speed Switch", "Double speed mode = %hhu\n", double_speed);
 				}
 			} else {
-				PC++;
+				//PC++;
 				ERROR("STOP Instruction - Special HALT Mode entrance", "unimplemented\n");
 				// halted = 1; ???
 				goto ch_speed;
 			}
 		} else {
-			if (!(ioIF & read_ie())) PC++;
+			//if (!(ioIF & read_ie())) PC++;
 			ERROR("STOP Instruction - STOP Mode entrance", "unimplemented\n");
 			// STOP Mode
-			// TODO: Reset DIV
+			direct_write_io(DIV, 0);
 		}
 	}
+	stopped = 0;
 
 	"""
 

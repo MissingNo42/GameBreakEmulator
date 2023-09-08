@@ -6,7 +6,7 @@ set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
 #add_compile_options("-O1")
 #add_compile_options("-Os") #size
-add_compile_options("-O1")
+add_compile_options("-Ofast")
 #add_compile_options("-flto") # link opti
 #add_compile_options("-ffast-math") # break ISO/IEEE
 

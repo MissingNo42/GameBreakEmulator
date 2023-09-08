@@ -23,107 +23,6 @@ static_assert(sizeof(OverworldTile) == 1, "invalid size");
 static_assert(sizeof(Palette)       == 4, "invalid size");
 static_assert(sizeof(Region)        == 2, "invalid size");*/
 
-//int SDL_main(int argc, char * argv[]);
-
-int main00() {
-	INFO("GameBreakEmulator starting", "cartridge file = %s\n", tr);
-	
-	open_cartridge(tr);
-	
-	Reset_io_ports(1);
-	Reset_cpu(1);
-	Reset_ppu(1);
-	Reset_dma(1);
-	
-	Reset_cartridge(1);
-	Reset_mmu(1);
-	Reset_mapper(1);
-	
-	/*
-	if (open_cartridge(tr)
-	&& load_header()
-	&& init_memory()) {
-		INFO("Memory loaded", "@ %p\n", Memory);
-		init_mapper();
-		
-		INFO("Load cartridge...", "\n");
-		load_cartridge();
-	}*/
-	
-	/* approx mapper1 test
-	u8 t[ROM1];
-	u8 r=1;
-	for (u16 i = 0; i <= ROM1; i++) {
-		t[i]=read(i+ROM1);
-	}
-	write(0x2000, 255);
-	for (u16 i = 0; i <= ROM1; i++) {
-		r&=t[i]==read(i+ROM1);
-	}
-	
-	DEBUG(">> r", " = %d\n", r);
-	
-	for (u16 i = XRAM; i < XRAM+0x2000; i++) {
-		if (0xff!=read(i)) {
-			ERROR("Ram fault", "%04X %02X\n", i, read(i));
-			break;
-		}
-	}
-	
-	write(0x0000, 0xAA);
-	
-	for (u16 i = XRAM; i <= XRAM+0x2000; i++) {
-		write(i, 42);
-		if (42!=read(i)) ERROR("Ram fault", "%04X %hhu\n", i, mmu_read(i));
-	}*/
-	
-	INFO("rom:", " %p\nenter:", memoryMap.rom0+ROM0);
-	getchar();
-	
-	INFO("GameBreak Start !", "\n");
-	//cpu_init();
-	//for (u32 i = 0; i < (4194304<<8); i++) {
-	u32 pass = 0;
-	for (u32 i = 0; i < (4000000 * 100); i++) {
-		//if (i > 47000 && ioLY > 0x88 && ioLY < 0x92)
-		//	DEBUG("\t", "%d \t A %02X (z %hhu) | C %02X | E %02X | HL %04X ( LY %hhu 0x%02X)\n", i, A, z, C, E, HL,ioLY, ioLY);
-		if (!pass) {
-			DEBUG("\t", "%u \t A %02X | B %02X | C %02X | D %02X | E %02X | HL %04X  [%c %c %c %c]  ( LY %hhu 0x%02X)\n", i, A, B, C, D, E, HL,
-				  (z) ? 'Z': 'z', (n) ? 'N': 'n', (h) ? 'H': 'h', (c) ? 'C': 'c',
-			      ioLY, ioLY);
-			if (!(i & 0xf)) {
-				int cu = getchar();
-				if (cu != '\n') {
-					printf("pass:");
-					fflush(stdout);
-					scanf("%u%*c", &pass);
-				}
-			}
-		} else pass--;
-		cpu_run();
-		if (PC > 0x100) break;
-	}
-	
-	char xx=0;
-	for (u32 i = 0; i < 20000000; i++) {
-		//if (!(i & 0xffff))
-		if (i > 100) xx=1;
-		//if (xx)DEBUG("\t", "%d \t A %02X (z %hhu) | C %02X | E %02X | HL %04X ( LY %hhu 0x%02X)\n", i, A, z, C, E, HL,ioLY, ioLY);
-		cpu_run();
-	}
-	INFO("GameBreak Exit !", "\n");
-	
-	free(Memory);
-	return 0;
-}
-
-
-
-
-
-
-
-
 
 static inline u32 min(u32 a, u32 b){
 	return a > b ? b: a;
@@ -312,4 +211,9 @@ int main(int argc, char * argv[]) {
 	
 		GfxQuit();
 	}
+}
+
+
+int SDL_main(int argc, char * argv[]) { // entrypoint proof
+	return main(argc, argv);
 }
