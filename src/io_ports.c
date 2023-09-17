@@ -29,18 +29,17 @@ void w00(u16 addr, u8 value) { // P1 - JOYP
 }
 
 void w01(u16 addr, u8 value) {
-	direct_raw_write_io(addr, value);
+	ioSB = value;
 }
 
 void w02(u16 addr, u8 value) {
-	direct_raw_write_io(addr, value);
+	ioSC = value | 0x7C | (GBC << 1);
 }
 
 #define w03 dummy_write
 
 void w04(u16 addr, u8 value) { // DIV
 	timer.wdiv = ioDIV = 0x00;
-	// TODO reset
 }
 
 void w05(u16 addr, u8 value) { // TIMA
@@ -293,12 +292,12 @@ void w4F(u16 addr, u8 value) { // VBK
 void w50(u16 addr, u8 value) { // BOOTROM UNMAP
 	if (!memoryMap.bootrom_unmapped) {
 		memoryMap.bootrom_unmapped = 1;
-		PC = 0x100;
+		//PC = 0x100;
 		load_cartridge();
 		
 		set_compatibility_mode();
 		
-		INFO("BootRom Unmapping", "CGB = %hhu | DMG Mode = %hhu\n", GBC, DMG_MODE);
+		INFO("BootRom Unmapping", "CGB = %hhu | DMG Mode = %hhu (PC = %04X)\n", GBC, DMG_MODE, PCX);
 	}
 }
 
@@ -403,7 +402,10 @@ void w70(u16 addr, u8 value) { // SVBK
 #define w72 dummy_write // Undoc & unused GBC regs
 #define w73 dummy_write // Undoc & unused GBC regs
 #define w74 dummy_write // Undoc & unused GBC regs
-#define w75 dummy_write // Undoc & unused GBC regs
+
+void w75(u16 addr, u8 value) {
+	direct_raw_write_io(addr, value | 0x70);
+}
 
 void w76(u16 addr, u8 value) {
 	direct_raw_write_io(addr, value);

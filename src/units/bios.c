@@ -10,7 +10,7 @@
 u8 GBC;      // run on CGB or not (DMG or CGB BIOS)
 u8 DMG_MODE; // run on DMG or DMG compatibility mode
 
-Configuration configuration = {.dmg_game = 1, .gbc_game = 1, .both_game = 1};
+Configuration configuration = {.dmg_game = 0, .gbc_game = 1, .both_game = 0};
 
 
 void select_bios() {

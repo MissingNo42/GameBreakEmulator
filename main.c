@@ -3,12 +3,16 @@
 //#include "src/core.h"
 
 #define FPS 120
-#define tr "../rom/pdx.gb"
+//#define tr "../rom/pc.gbc"
+
 //#define tr "../testrom/blargg/halt_bug.gb"
+//#define tr "../testrom/blargg/cpu_instrs/cpu_instrs.gb"
+//#define tr "../testrom/blargg/instr_timing/instr_timing.gb"
 
 //#define tr "../testrom/blargg/mem_timing/individual/01-read_timing.gb"
+//#define tr "../testrom/bully/bully.gb"
 //#define tr "../testrom/mooneye-test-suite/acceptance/intr_timing.gb"
-//#define tr "../testrom/mooneye-test-suite/acceptance/intr_timing.gb"
+#define tr "../testrom/and/timers/tac_set_when_inc_16/tac_set_when_inc_16.gbc"
 
 /*
 static_assert(sizeof(Controller)    == 11,"invalid size");
@@ -147,46 +151,11 @@ int main(int argc, char * argv[]) {
 				}
 			}
 			frametime = SDL_GetTicks64();
-			/*
-			if (engine->ctrl.LEFT == CTRLKEY_HOLD && engine->ctrl.RIGHT == CTRLKEY_HOLD) { // DEBUG COMMAND
-				switch (debug_key) {
-					case SDLK_w: {
-						if (slowdown) slowdown -= 20;
-						else framelimit = 0;
-						printf("DEBUG W >> Fastup : by %hu (unleashed : %d)\n", slowdown, !framelimit);
-						break;
-					}
-					case SDLK_x: {
-						if (!framelimit) framelimit = 1;
-						else slowdown += 20;
-						printf("DEBUG X >> Slowdown : by %hu\n", slowdown);
-						break;
-					}
-					case SDLK_i: {
-						engine->render->region.layers ^= LAYER_BACKGROUND_S;
-						printf("DEBUG I >> Switch  by %d %d %d\n", engine->render->region.layers & 4, engine->render->region.layers & 2, engine->render->region.layers & 1);
-						break;
-					}
-					case SDLK_o: {
-						engine->render->region.layers ^= LAYER_BACKGROUND;
-						printf("DEBUG I >> Switch  by %d %d %d\n", engine->render->region.layers & 4, engine->render->region.layers & 2, engine->render->region.layers & 1);
-						break;
-					}
-					case SDLK_p: {
-						engine->render->region.layers ^= LAYER_FOREGROUND_S;
-						printf("DEBUG I >> Switch  by %d %d %d\n", engine->render->region.layers & 4, engine->render->region.layers & 2, engine->render->region.layers & 1);
-						break;
-					}
-					default:
-				}
-				debug_key = 0;
-			}*/
 			
 			SDL_LockTexture(LCD, NULL, &px, &pitch);
 			
 			ppu_set_screen(px);
 			emulator_loop(NULL);
-			//renderRGBA(px, engine->render);	//memcpy(px, s.pixels, sizeof(Screen));
 			
 			SDL_UnlockTexture(LCD);
 			SDL_Rect rc = {0, 0, 160, 144};

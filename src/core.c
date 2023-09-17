@@ -16,15 +16,15 @@ void emulator_start(const char * const fn) {
 	
 	ResetEmulator(1);
 	
-	INFO("rom0:", " %p\n", memoryMap.rom0);//+ROM0);
-	INFO("rom1:", " %p\n", memoryMap.rom1);//+ROM0);
-	INFO("xram:", " %p\n", memoryMap.xram);//+XRAM);
-	INFO("vram:", " %p\n", memoryMap.vram);//+VRAM);
-	INFO("wram0:", " %p\n", memoryMap.wram0);//+WRAM0);
-	INFO("wram1:", " %p\n", memoryMap.wram1);//+WRAM1);
-	INFO("oam:", " %p\n", memoryMap.oam);//+OAM);
-	INFO("io:", " %p\n", memoryMap.io);//+IO);
-	INFO("hram:", " %p\nenter:", memoryMap.hram);//+HRAM);
+	INFO("rom0:", " %p\n", memoryMap.rom0+ROM0);
+	INFO("rom1:", " %p\n", memoryMap.rom1+ROM0);
+	INFO("xram:", " %p\n", memoryMap.xram+XRAM);
+	INFO("vram:", " %p\n", memoryMap.vram+VRAM);
+	INFO("wram0:", " %p\n", memoryMap.wram0+WRAM0);
+	INFO("wram1:", " %p\n", memoryMap.wram1+WRAM1);
+	INFO("oam:", " %p\n", memoryMap.oam+OAM);
+	INFO("io:", " %p\n", memoryMap.io+IO);
+	INFO("hram:", " %p\nenter:", memoryMap.hram+HRAM);
 	//getchar();
 	INFO("GameBreak Start !", "\n");
 	
