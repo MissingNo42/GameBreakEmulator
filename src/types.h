@@ -7,18 +7,31 @@
 
 #include <stdint.h>
 
+
 ////////////////////////   Macros   ///////////////////////////
 
+/**
+ * @brief Define macros for Endian care struct
+ * */
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 #define IS_LITTLE_ENDIAN 1
-#define Lstruct(...) struct {__VA_ARGS__};
+#define Lstruct(...) struct {__VA_ARGS__;};
 #define Bstruct(...)
 // TODO: check SP/PC/HL/Structs..
 #else
 #define IS_BIG_ENDIAN 1
 #define Lstruct(...)
-#define Bstruct(...) struct {__VA_ARGS__};
+#define Bstruct(...) struct {__VA_ARGS__;};
 #endif
+
+
+/// Endianned Struct (N fields): takes the little endian layout
+//#define Estruct(type, ...) Lstruct(type __VA_ARGS__) Bstruct(type __VA_ARGS__)
+#define Estruct2(type, A, B) Lstruct(type A, B) Bstruct(type B, A)
+#define Estruct3(type, A, B, C) Lstruct(type A, B, C) Bstruct(type C, B, A)
+#define Estruct4(type, A, B, C, D) Lstruct(type A, B, C, D) Bstruct(type D, C, B, A)
+#define Estruct5(type, A, B, C, D, E) Lstruct(type A, B, C, D, E) Bstruct(type E, D, C, B, A)
+#define Estruct6(type, A, B, C, D, E, F) Lstruct(type A, B, C, D, E, F) Bstruct(type F, E, D, C, B, A)
 
 
 ////////////////////////    Types   ///////////////////////////
