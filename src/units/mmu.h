@@ -127,7 +127,7 @@ extern u8 last_value;
 #define mmu_RXWX(R, accessR, accessW, cond) mmu_DX(R, accessR, accessW) mmu_I(R, cond)
 
 inline u8 direct_read_ie() { return memoryMap.hram[0xFFFF]; }
-inline void direct_write_ie(u8 value) { memoryMap.hram[0xFFFF] = (value & 0x1f); }
+inline void direct_write_ie(u8 value) { memoryMap.hram[0xFFFF] = value; }
 #define read_ie() direct_read_ie()
 #define write_ie(value) direct_write_ie(value)
 

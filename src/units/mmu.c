@@ -45,7 +45,10 @@ u8 * alloc_memory() {
 		
 	} else if (!Memory) {
 		alloc: Memory = malloc(memoryMap.map_size);
-		if (Memory) DEBUG("Virtual Memory allocated", "size: %u | addr = %p\n", memoryMap.map_size, Memory);
+		if (Memory) {
+			DEBUG("Virtual Memory allocated", "size: %u | addr = %p\n", memoryMap.map_size, Memory);
+			Memory[memoryMap.map_size - 1] = 0; // $FFFF IE = 0x00
+		}
 		else CRITICAL("Virtual Memory allocation failed", "requested size: %u\n", memoryMap.map_size);
 		
 	} else {
@@ -89,6 +92,7 @@ void map_memory(){
 	memoryMap.io = ((u8 *) &ioPorts) - IO; // see io_ports.c/h  //memoryMap.oam  + 0xa0 + OAM - IO;
 	memoryMap.hram = memoryMap.oam + 0xa0 + OAM - HRAM; //memoryMap.io;//   + 0x80;
 }
+
 
 
 u8 * init_memory(){
@@ -153,7 +157,6 @@ inline void mmu_write(u16 addr, u8 value){
 			if (addr & 0x2000) {
 				if ((addr & OAM) == OAM) {
 					if (addr & 0x0100) { // FFXX
-						if (addr == 0xFFFF) write_ie(value); // bc 0x1F filter
 						if (addr & 0x80) write_hram(addr, value);
 						else write_io(addr, value);
 					} else if ((addr & 0x80) && (addr & 0x60)) ERROR("Write in Reserved RAM", "$%04X (%hhu | 0x%02X)\n", addr, value, value);
@@ -184,8 +187,7 @@ inline void direct_write(u16 addr, u8 value){
 			if (addr & 0x2000) {
 				if ((addr & OAM) == OAM) {
 					if (addr & 0x0100) {
-						if (addr == 0xFFFF) direct_write_ie(value);
-						else if (addr & 0x80) direct_write_hram(addr, value);
+						if (addr & 0x80) direct_write_hram(addr, value);
 						else direct_write_io(addr, value);
 					} else if ((addr & 0x80) && (addr & 0x60)) ERROR("Write in Reserved RAM", "$%04X (%hhu | 0x%02X)\n", addr, value, value);
 					else direct_write_oam(addr, value);
