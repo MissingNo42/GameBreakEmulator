@@ -1,0 +1,8 @@
+//
+// Created by Romain on 15/09/2023.
+//
+
+#ifndef GAMEBREAKEMULATOR_SERIAL_H
+#define GAMEBREAKEMULATOR_SERIAL_H
+
+#endif //GAMEBREAKEMULATOR_SERIAL_H

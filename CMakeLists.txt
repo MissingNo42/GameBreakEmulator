@@ -4,9 +4,9 @@ project(GameBreakEmulator C)
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
-#add_compile_options("-O1")
+add_compile_options("-O1")
 #add_compile_options("-Os") #size
-add_compile_options("-Ofast")
+#add_compile_options("-Ofast")
 #add_compile_options("-flto") # link opti
 #add_compile_options("-ffast-math") # break ISO/IEEE
 
@@ -21,7 +21,7 @@ add_compile_options("-Wno-unused-parameter")
 add_compile_options("-Wall")
 add_compile_options("-Wextra")
 add_compile_options("-Wshadow")
-add_compile_options("-pedantic")
+#add_compile_options("-pedantic")
 add_compile_options("-Wformat=2")
 add_compile_options("-Wformat-overflow")
 add_compile_options("-Wformat-truncation")
@@ -52,7 +52,9 @@ add_executable(GameBreakEmulator main.c
         src/cartridge.c
         src/utils.c
         src/timer.c
-        src/core.c)
+        src/core.c
+        src/units/serial.c
+)
 
 
 #INCLUDE(FindPkgConfig)
