@@ -94,7 +94,10 @@ void Log(ELOG type, char lock, const char * title, const char * str, ...){
 	struct tm tm = *localtime(&t);
 	printf("\x1b[38;5;%dm%d-%02d-%02d %02d:%02d:%02d ($%04X %s [%02X] %04X): %s\x1b[0m\t",
 		   type, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec,
-		   PCX, OPCODE == 0xCB ? OPName[0x100 | O1]: OPName[OPCODE], OPCODE, OPERAND, title);
+		   PCX,
+		   //OPCODE == 0xCB ? OPName[0x100 | O1]: OPName[OPCODE], OPCODE, OPERAND,
+		   "UNKN0", 0, 0,
+		   title);
 	va_list l;
 	va_start(l, str);
 	if (str) vprintf(str, l);
@@ -108,9 +111,9 @@ void LogInst() { // Mesen2 [PC,h] [A,2h] [B,2h][C,2h] [D,2h][E,2h] [PS,4] [H,2h]
 	static u32 V = 0;
 	if (!f) f = fopen("gbn.txt", "w");
 	
-	fprintf(f, "%02X %02X %04X %04X %c%c%c%c %04X %04X (%04X %s [%02X %02X] %d %d <%d %d: %02X(%d) %02X>)\n",
-			PC, A, BC, DE, (z) ? 'Z' : 'z', (n) ? 'N' : 'n', (h) ? 'H' : 'h', (c) ? 'C' : 'c', HL, SP, PCX, OPCODE == 0xCB ? OPName[0x100 | O1]: OPName[OPCODE],
-			OPCODE, OPERAND, mapper.data.mbc5.rom_bank, mapper.data.mbc5.ram_bank, ioLY, ppu_mem.dots, ioSTAT, PPU_MODE, ioLCDC);
+	//fprintf(f, "%02X %02X %04X %04X %c%c%c%c %04X %04X (%04X %s [%02X %02X] %d %d <%d %d: %02X(%d) %02X>)\n",
+	//		PC, A, BC, DE, (z) ? 'Z' : 'z', (n) ? 'N' : 'n', (h) ? 'H' : 'h', (c) ? 'C' : 'c', HL, SP, PCX, OPCODE == 0xCB ? OPName[0x100 | O1]: OPName[OPCODE],
+	//		OPCODE, OPERAND, mapper.data.mbc5.rom_bank, mapper.data.mbc5.ram_bank, ioLY, ppu_mem.dots, ioSTAT, PPU_MODE, ioLCDC);
 	//V++;
 	//if (V == 20000) {
 	//	V = 0;
@@ -120,6 +123,7 @@ void LogInst() { // Mesen2 [PC,h] [A,2h] [B,2h][C,2h] [D,2h][E,2h] [PS,4] [H,2h]
 
 void Lock(){
 	static u32 lock = 0;
+	
 	if (lock) lock--;
 	else {
 		int x = getchar();
@@ -128,6 +132,10 @@ void Lock(){
 			case 'w': {
 				fclose(f);
 				f = fopen("gbn.txt", "a");
+				break;
+			}
+			case 'u': {
+				ppu_mem.frame_ready = 1;
 				break;
 			}
 			case 'm': {
